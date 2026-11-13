@@ -159,6 +159,7 @@ function addPerson(person, role, x, z, colors, center) {
     })
   );
   backing.position.set(x, height / 2, z);
+  backing.renderOrder = 2;
   members.add(backing);
   const faceWidth = width - border * 2, faceHeight = height - border * 2;
   const geometry = new THREE.ShapeGeometry(roundedShape(faceWidth, faceHeight, Math.max(0.03, radius - border)), 8);
@@ -170,20 +171,22 @@ function addPerson(person, role, x, z, colors, center) {
   const tile = new THREE.Mesh(
     geometry,
     new THREE.MeshBasicMaterial({
-      map: tileTexture(displayName, role, colors, person),
-      side: THREE.DoubleSide
+      map: tileTexture(displayName, role, colors, person)
     })
   );
   tile.position.set(x, height / 2, z + 0.091);
+  tile.renderOrder = 1;
   tile.userData.personId = person.id;
   members.add(tile);
   tiles.push(tile);
   const rear = new THREE.Mesh(geometry.clone(), tile.material.clone());
   rear.position.set(x, height / 2, z - 0.001);
   rear.rotation.y = Math.PI;
+  rear.renderOrder = 1;
   rear.userData.personId = person.id;
   members.add(rear);
   tiles.push(rear);
+  for (const mesh of [backing, tile, rear]) mesh.userData.baseY = height / 2;
   personCards.set(person.id, [backing, tile, rear]);
 
   const shadowCanvas = document.createElement("canvas");
@@ -214,12 +217,39 @@ function addPerson(person, role, x, z, colors, center) {
 function setHoveredPerson(personId) {
   if (hoveredPersonId === personId) return;
   hoveredPersonId = personId;
+  const descendants = new Set();
+  if (personId && familyData) {
+    const childrenByParent = new Map();
+    for (const family of familyData.families.values()) {
+      for (const parent of [family.husband, family.wife]) {
+        if (!parent) continue;
+        if (!childrenByParent.has(parent)) childrenByParent.set(parent, []);
+        childrenByParent.get(parent).push(...family.children);
+      }
+    }
+    const pending = [personId];
+    const visited = new Set(pending);
+    while (pending.length) {
+      for (const child of childrenByParent.get(pending.pop()) || []) {
+        if (visited.has(child)) continue;
+        visited.add(child);
+        descendants.add(child);
+        pending.push(child);
+      }
+    }
+  }
   for (const [id, meshes] of personCards) {
     const highlighted = id === personId;
+    const transparent = descendants.has(id);
     for (const mesh of meshes) {
-      mesh.scale.setScalar(highlighted ? 1.05 : 1);
-      mesh.material.transparent = Boolean(personId && !highlighted);
-      mesh.material.opacity = personId && !highlighted ? 0.5 : 1;
+      const scale = highlighted ? 1.2 : 1;
+      mesh.scale.setScalar(scale);
+      mesh.position.y = mesh.userData.baseY * scale;
+      if (mesh.material.transparent !== transparent) {
+        mesh.material.transparent = transparent;
+        mesh.material.needsUpdate = true;
+      }
+      mesh.material.opacity = transparent ? 0.5 : 1;
     }
   }
   drawScene();
