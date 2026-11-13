@@ -105,6 +105,7 @@ function updatePersonChooser(individuals, selectedId) {
     personOptions.append(option);
     pickerIds.set(label, person.id);
   }
+  document.querySelector("#person-setting").hidden = false;
   const selected = individuals.get(selectedId);
   personPicker.value = selected
     ? (names.get(selected.name || `Unknown person (${selected.id})`) > 1

@@ -23,34 +23,54 @@
       <div class="header-controls">
         <button id="menu-toggle" class="theme-toggle" type="button" aria-label="Options" aria-controls="menu" aria-expanded="false">☰</button>
         <div id="menu" class="menu" hidden>
-          <button id="change-file" class="menu-action" type="button">Change file</button>
-          <p class="filename-details">Current file: <strong id="filename">No file selected</strong></p>
-          <label class="name-setting"><input id="camera-mode-selector" type="checkbox" checked> Show Pan/Rotate controls</label>
-          <label class="name-setting"><input id="show-second-relatives" type="checkbox" checked> Show 2nd relatives</label>
-          <label class="name-setting"><input id="simplify-names" type="checkbox" checked> Simplify surnames</label>
-          <label class="color-setting" for="card-colors">Card colors
-            <select id="card-colors">
-              <option value="neutral">Neutral</option>
-              <option value="sex">Recorded GEDCOM sex (SEX)</option>
-            </select>
-          </label>
-          <p class="relationship-legend">Card labels show each person’s relationship. Blue-gray connectors link parents and children; warm connectors mark spouse pairs.</p>
-          <p id="color-legend" class="color-legend" hidden>M: blue; F: rose. Missing, unknown, and other values use neutral cards. This represents the recorded GEDCOM SEX field.</p>
-          <label class="select-setting" for="visual-theme">Visual theme
-            <select id="visual-theme">
-              <option value="standard">Standard</option>
-              <option value="space">Space</option>
-              <option value="heritage">Heritage</option>
-            </select>
-          </label>
-          <label class="select-setting" for="appearance">Appearance
-            <select id="appearance">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
-            </select>
-          </label>
-          <p id="explorer-help" hidden>Drag in the selected Pan or Rotate mode. Hide Pan/Rotate controls in Options to use Space+drag to pan. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it. Labels show each person’s relationship to the centered person.</p>
+          <section class="menu-section" aria-labelledby="menu-family-heading">
+            <h2 id="menu-family-heading" class="menu-heading">Family</h2>
+            <label id="person-setting" class="person-setting" for="person-picker" hidden>Choose person
+              <input id="person-picker" type="search" list="person-options" placeholder="Search family members" aria-label="Choose person" autocomplete="off">
+            </label>
+            <datalist id="person-options"></datalist>
+            <label class="name-setting"><input id="show-second-relatives" type="checkbox" checked> Show 2nd relatives</label>
+            <label class="name-setting"><input id="simplify-names" type="checkbox" checked> Simplify surnames</label>
+            <label class="color-setting" for="card-colors">Card colors
+              <select id="card-colors">
+                <option value="neutral">Neutral</option>
+                <option value="sex">Recorded GEDCOM sex (SEX)</option>
+              </select>
+            </label>
+            <p class="relationship-legend">Card labels show each person’s relationship. Blue-gray connectors link parents and children; warm connectors mark spouse pairs.</p>
+            <p id="color-legend" class="color-legend" hidden>M: blue; F: rose. Missing, unknown, and other values use neutral cards. This represents the recorded GEDCOM SEX field.</p>
+          </section>
+          <section class="menu-section" aria-labelledby="menu-view-heading">
+            <h2 id="menu-view-heading" class="menu-heading">View</h2>
+            <label class="name-setting"><input id="camera-mode-selector" type="checkbox" checked> Show Pan/Rotate controls</label>
+            <div id="view-actions" class="menu-actions" role="group" aria-label="Camera view" hidden>
+              <button id="fit-family" class="menu-action" type="button">Fit family</button>
+              <button id="reset-view" class="menu-action" type="button">Reset view</button>
+            </div>
+            <p id="explorer-help" hidden>Drag in the selected Pan or Rotate mode. Hide Pan/Rotate controls in Options to use Space+drag to pan. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it. Labels show each person’s relationship to the centered person.</p>
+          </section>
+          <section class="menu-section" aria-labelledby="menu-appearance-heading">
+            <h2 id="menu-appearance-heading" class="menu-heading">Appearance</h2>
+            <label class="select-setting" for="visual-theme">Visual theme
+              <select id="visual-theme">
+                <option value="standard">Standard</option>
+                <option value="space">Space</option>
+                <option value="heritage">Heritage</option>
+              </select>
+            </label>
+            <label class="select-setting" for="appearance">Appearance
+              <select id="appearance">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="system">System</option>
+              </select>
+            </label>
+          </section>
+          <section class="menu-section" aria-labelledby="menu-file-heading">
+            <h2 id="menu-file-heading" class="menu-heading">File</h2>
+            <button id="change-file" class="menu-action" type="button">Change file</button>
+            <p class="filename-details">Current file: <strong id="filename">No file selected</strong></p>
+          </section>
         </div>
       </div>
     </header>
@@ -79,9 +99,6 @@
     <div id="family-view" hidden>
       <div class="explorer-ui">
         <section class="picker-panel" aria-label="Family selection">
-          <label for="person-picker">Choose person</label>
-          <input id="person-picker" type="search" list="person-options" placeholder="Search family members" aria-label="Choose person" autocomplete="off">
-          <datalist id="person-options"></datalist>
           <span id="member-count"></span>
           <details class="relatives">
             <summary>Family members and relationships</summary>
@@ -92,10 +109,6 @@
           <div id="camera-interaction" class="toolbar-group" role="group" aria-label="Camera interaction">
             <button id="pan-mode" type="button" aria-pressed="false">Pan</button>
             <button id="rotate-mode" type="button" aria-pressed="true">Rotate</button>
-          </div>
-          <div class="toolbar-group" role="group" aria-label="Camera view">
-            <button id="fit-family" type="button">Fit family</button>
-            <button id="reset-view" type="button">Reset view</button>
           </div>
         </div>
       </div>

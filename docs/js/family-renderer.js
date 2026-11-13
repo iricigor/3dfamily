@@ -92,9 +92,11 @@ function tileTexture(name, role, colors, person) {
   lines.forEach((line, index) => {
     context.fillText(line, 256, 132 + (index - (lines.length - 1) / 2) * lineHeight);
   });
-  context.font = "28px system-ui, sans-serif";
-  context.fillStyle = colors.getPropertyValue("--person-muted").trim();
-  context.fillText(role === "center" ? "Center person" : role.replace("-", " "), 256, 270);
+  if (role !== "center") {
+    context.font = "28px system-ui, sans-serif";
+    context.fillStyle = colors.getPropertyValue("--person-muted").trim();
+    context.fillText(role.replace("-", " "), 256, 270);
+  }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
@@ -136,9 +138,12 @@ function addPerson(person, role, x, z, colors, center) {
 
   const name = document.createElement("strong");
   name.textContent = displayName;
-  const label = document.createElement("small");
-  label.textContent = role === "center" ? "Center person" : role.replace("-", " ");
-  card.append(name, label);
+  card.append(name);
+  if (role !== "center") {
+    const label = document.createElement("small");
+    label.textContent = role.replace("-", " ");
+    card.append(label);
+  }
   peopleList.append(card);
 
   const height = role === "center" ? 2.73 : 2.6;
@@ -450,6 +455,7 @@ function renderFamily({ individuals, families }, centerId) {
   status.dataset.error = "false";
   status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} family member${count === 1 ? "" : "s"} shown.`;
   familyView.hidden = false;
+  document.querySelector("#view-actions").hidden = false;
   pendingInitialFit = !familyData || initialFitPending;
   layoutScene(pendingInitialFit);
   if (pendingInitialFit) {

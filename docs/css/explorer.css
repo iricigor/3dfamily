@@ -41,6 +41,37 @@ main.exploring {
   text-align: left;
   cursor: pointer;
 }
+.menu-section + .menu-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.menu-heading {
+  margin: 0 0 6px;
+  font-size: .9rem;
+}
+.person-setting {
+  display: grid;
+  gap: 6px;
+  font-size: .9rem;
+}
+.person-setting input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+}
+.menu-actions {
+  display: flex;
+  gap: 6px;
+}
+.menu-actions .menu-action {
+  flex: 1;
+}
 .filename-details {
   margin: 8px 0;
   color: var(--muted);
