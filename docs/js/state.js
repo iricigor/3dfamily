@@ -20,6 +20,7 @@ const personOptions = document.querySelector("#person-options");
 const memberCount = document.querySelector("#member-count");
 const pickerIds = new Map();
 const main = document.querySelector("main");
+const cameraModeSelector = document.querySelector("#camera-mode-selector");
 let familyData = null;
 let centerPersonId;
 let THREE, renderer, world, camera, controls, members;

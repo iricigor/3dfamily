@@ -25,6 +25,7 @@
         <div id="menu" class="menu" hidden>
           <button id="change-file" class="menu-action" type="button">Change file</button>
           <p class="filename-details">Current file: <strong id="filename">No file selected</strong></p>
+          <label class="name-setting"><input id="camera-mode-selector" type="checkbox" checked> Show Pan/Rotate controls</label>
           <label class="name-setting"><input id="show-second-relatives" type="checkbox" checked> Show 2nd relatives</label>
           <label class="name-setting"><input id="simplify-names" type="checkbox" checked> Simplify surnames</label>
           <label class="color-setting" for="card-colors">Card colors
@@ -49,7 +50,7 @@
               <option value="system">System</option>
             </select>
           </label>
-          <p id="explorer-help" hidden>Drag in Pan or Rotate mode. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it. Labels show each person’s relationship to the centered person.</p>
+          <p id="explorer-help" hidden>Drag in the selected Pan or Rotate mode. Hide Pan/Rotate controls in Options to use Space+drag to pan. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it. Labels show each person’s relationship to the centered person.</p>
         </div>
       </div>
     </header>
@@ -88,7 +89,7 @@
           </details>
         </section>
         <div class="toolbar" aria-label="Camera controls">
-          <div class="toolbar-group" role="group" aria-label="Camera interaction">
+          <div id="camera-interaction" class="toolbar-group" role="group" aria-label="Camera interaction">
             <button id="pan-mode" type="button" aria-pressed="false">Pan</button>
             <button id="rotate-mode" type="button" aria-pressed="true">Rotate</button>
           </div>
