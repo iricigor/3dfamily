@@ -265,6 +265,27 @@
     .toolbar input { width: 10rem; }
     .toolbar select { width: 12rem; }
 
+    .relatives {
+      position: relative;
+      align-self: flex-start;
+      z-index: 1;
+    }
+
+    .relatives summary { cursor: pointer; color: var(--muted); }
+    #people {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: min(420px, calc(100vw - 24px));
+      max-height: 45vh;
+      overflow: auto;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+    }
+
     .stage {
       overflow: hidden;
       flex: 1;
@@ -389,10 +410,13 @@
         <span style="--swatch:#ffd2d8">Siblings right</span>
         <span style="--swatch:#dfe3eb">2nd relatives</span>
       </div>
+      <details class="relatives">
+        <summary>Family members and relationships</summary>
+        <div id="people"></div>
+      </details>
       <div class="stage" tabindex="0" role="region" aria-label="3D family view">
         <div id="scene" class="scene"></div>
       </div>
-      <div id="people" hidden></div>
     </div>
   </main>
   <script type="importmap">
@@ -423,6 +447,7 @@
     let centerPersonId;
     let THREE, renderer, world, camera, controls, members;
     let tiles = [];
+    let connectorPoints = [];
     let sceneReady;
     let sceneResizeObserver;
     let pendingInitialFit = false;
@@ -730,6 +755,7 @@
       });
       members.clear();
       tiles = [];
+      connectorPoints = [];
     }
 
     function tileTexture(name, role, colors) {
@@ -901,33 +927,34 @@
       ));
     }
 
-    function connectFamily(parents, children, colors) {
+    function connectFamily(parents, children, colors, routes, busZs, familyIndex, lane) {
       const familyColor = colors.getPropertyValue("--connector").trim();
       const spouseColor = colors.getPropertyValue("--spouse-connector").trim();
+      const add = (points, color, bus = false) => routes.push({ points, color, bus, familyIndex });
       let parentAnchor = parents[0];
 
       if (parents.length === 2) {
         const [first, second] = parents;
         const vertical = Math.abs(first.x - second.x) < 0.01;
         if (vertical) {
-          const railX = first.x - 0.8;
+          const railX = first.x - 0.8 + lane;
           parentAnchor = { x: railX, z: (first.z + second.z) / 2 };
           for (const offset of [-0.09, 0.09]) {
             const x = railX + offset;
-            addConnector([first, { x, z: first.z }, { x, z: second.z }, second], spouseColor);
+            add([first, { x, z: first.z }, { x, z: second.z }, second], spouseColor);
           }
-          if (children.length) addConnector([
+          if (children.length) add([
             { x: railX - 0.09, z: parentAnchor.z }, { x: railX + 0.09, z: parentAnchor.z }
           ], familyColor);
         } else {
-          const railZ = Math.abs(first.z - second.z) < 0.01
-            ? first.z - 0.8 : (first.z + second.z) / 2;
+          const railZ = (Math.abs(first.z - second.z) < 0.01
+            ? first.z - 0.8 : (first.z + second.z) / 2) + lane;
           parentAnchor = { x: (first.x + second.x) / 2, z: railZ };
           for (const offset of [-0.09, 0.09]) {
             const z = railZ + offset;
-            addConnector([first, { x: first.x, z }, { x: second.x, z }, second], spouseColor);
+            add([first, { x: first.x, z }, { x: second.x, z }, second], spouseColor);
           }
-          if (children.length) addConnector([
+          if (children.length) add([
             { x: parentAnchor.x, z: railZ - 0.09 }, { x: parentAnchor.x, z: railZ + 0.09 }
           ], familyColor);
         }
@@ -935,15 +962,17 @@
 
       if (!children.length || (!parentAnchor && children.length < 2)) return;
       const childrenZ = children.reduce((sum, child) => sum + child.z, 0) / children.length;
-      const busZ = parentAnchor && Math.abs(parentAnchor.z - childrenZ) > 0.01
-        ? (parentAnchor.z + childrenZ) / 2 : childrenZ - 0.8;
+      let busZ = (parentAnchor && Math.abs(parentAnchor.z - childrenZ) > 0.01
+        ? (parentAnchor.z + childrenZ) / 2 : childrenZ - 0.8) + lane;
+      while (busZs.some((used) => Math.abs(used - busZ) < 0.3)) busZ += 0.3;
+      busZs.push(busZ);
       const xs = children.map((child) => child.x);
       if (parentAnchor) xs.push(parentAnchor.x);
       const left = Math.min(...xs), right = Math.max(...xs);
-      addConnector([{ x: left, z: busZ }, { x: right, z: busZ }], familyColor);
-      for (const child of children) addConnector([child, { x: child.x, z: busZ }], familyColor);
+      add([{ x: left, z: busZ }, { x: right, z: busZ }], familyColor, true);
+      for (const child of children) add([child, { x: child.x, z: busZ }], familyColor);
       if (parentAnchor) {
-        addConnector([parentAnchor, { x: parentAnchor.x, z: busZ }], familyColor);
+        add([parentAnchor, { x: parentAnchor.x, z: busZ }], familyColor);
       } else {
         const marker = new THREE.Mesh(
           new THREE.RingGeometry(0.1, 0.17, 24),
@@ -952,6 +981,48 @@
         marker.rotation.x = -Math.PI / 2;
         marker.position.set((left + right) / 2, 0.065, busZ);
         members.add(marker);
+      }
+    }
+
+    function drawConnectors(routes) {
+      const horizontals = [];
+      for (const route of routes) {
+        for (let i = 1; i < route.points.length; i++) {
+          const start = route.points[i - 1], end = route.points[i];
+          if (Math.abs(start.z - end.z) < 0.001 && Math.abs(start.x - end.x) > 0.001) {
+            horizontals.push({ start, end, familyIndex: route.familyIndex });
+          }
+        }
+      }
+      for (const route of routes) {
+        let part = [route.points[0]];
+        for (let i = 1; i < route.points.length; i++) {
+          const start = route.points[i - 1], end = route.points[i];
+          if (Math.abs(start.x - end.x) < 0.001 && Math.abs(start.z - end.z) > 0.001) {
+            const direction = Math.sign(end.z - start.z);
+            // Break foreign branches at crossings rather than implying a junction.
+            const crossings = horizontals.filter((line) => line.familyIndex !== route.familyIndex &&
+              start.x >= Math.min(line.start.x, line.end.x) &&
+              start.x <= Math.max(line.start.x, line.end.x) &&
+              (line.start.z - start.z) * direction > 0.12 &&
+              (end.z - line.start.z) * direction > 0.12)
+              .map((line) => (line.start.z - start.z) * direction)
+              .sort((a, b) => a - b);
+            const gaps = [];
+            for (const crossing of crossings) {
+              const last = gaps.at(-1);
+              if (last && crossing - 0.12 <= last[1]) last[1] = Math.max(last[1], crossing + 0.12);
+              else gaps.push([crossing - 0.12, crossing + 0.12]);
+            }
+            for (const [before, after] of gaps) {
+              part.push({ x: start.x, z: start.z + direction * before });
+              addConnector(part, route.color);
+              part = [{ x: start.x, z: start.z + direction * after }];
+            }
+          }
+          part.push(end);
+        }
+        addConnector(part, route.color);
       }
     }
 
@@ -964,6 +1035,7 @@
       if (fit === true && tiles.length) {
         const bounds = new THREE.Box3();
         tiles.forEach((tile) => bounds.expandByObject(tile));
+        connectorPoints.forEach(({ x, z }) => bounds.expandByPoint(new THREE.Vector3(x, 0, z)));
         const target = bounds.getCenter(new THREE.Vector3());
         const direction = camera.position.clone().sub(controls.target).normalize();
         const right = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
@@ -1030,13 +1102,20 @@
       relatives.siblings.forEach((person, index) => place(person, "sibling", 4 + index * 3.8, 0));
       row(relatives.children, "child", 5);
       row(relatives.grandchildren, "grandchild", 10);
+      const visibleFamilies = [];
       for (const family of families.values()) {
         const parents = [...new Set([family.husband, family.wife])].filter((id) => positions.has(id));
         const children = [...new Set(family.children)].filter((id) => positions.has(id) && !parents.includes(id));
         if (parents.length + children.length < 2) continue;
-        connectFamily(parents.map((id) => positions.get(id)),
-          children.map((id) => positions.get(id)), colors);
+        visibleFamilies.push({ parents, children });
       }
+      const routes = [], busZs = [];
+      visibleFamilies.forEach(({ parents, children }, index) => connectFamily(
+        parents.map((id) => positions.get(id)), children.map((id) => positions.get(id)),
+        colors, routes, busZs, index, (index - (visibleFamilies.length - 1) / 2) * 0.4
+      ));
+      connectorPoints = routes.flatMap((route) => route.points);
+      drawConnectors(routes);
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(4000, 4000),
         new THREE.MeshBasicMaterial({ color: colors.getPropertyValue("--page-bg").trim() })
