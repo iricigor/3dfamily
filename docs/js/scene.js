@@ -49,10 +49,11 @@ async function createScene() {
     setMode("rotate");
     controls.addEventListener("start", () => { pendingInitialFit = false; });
     controls.addEventListener("change", drawScene);
-    world.add(new THREE.HemisphereLight(0xffffff, 0x536078, 1.4));
-    const light = new THREE.DirectionalLight(0xffffff, 1.5);
-    light.position.set(-3, 10, 6);
-    world.add(light);
+    ambientLight = new THREE.HemisphereLight(0xffffff, 0x536078, 1.4);
+    world.add(ambientLight);
+    keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    keyLight.position.set(-3, 10, 6);
+    world.add(keyLight);
     members = new THREE.Group();
     world.add(members);
     if ("ResizeObserver" in window) {
@@ -109,6 +110,15 @@ async function createScene() {
     scene.replaceChildren();
     throw new Error("The 3D view needs WebGL and access to the Three.js CDN. Enable WebGL and check your connection, then choose the file again.");
   }
+}
+
+function updateSceneLighting(colors) {
+  if (!ambientLight || !keyLight) return;
+  ambientLight.color.set(colors.getPropertyValue("--scene-sky").trim());
+  ambientLight.groundColor.set(colors.getPropertyValue("--scene-ground").trim());
+  ambientLight.intensity = Number(colors.getPropertyValue("--scene-ambient-intensity"));
+  keyLight.color.set(colors.getPropertyValue("--scene-light").trim());
+  keyLight.intensity = Number(colors.getPropertyValue("--scene-key-intensity"));
 }
 
 function drawScene() {

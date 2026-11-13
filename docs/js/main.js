@@ -33,6 +33,56 @@ menu.addEventListener("keydown", (event) => {
   }
 });
 
+const themePreferenceKey = "3dfamily.visualTheme";
+const appearancePreferenceKey = "3dfamily.appearance";
+const systemAppearance = window.matchMedia?.("(prefers-color-scheme: dark)");
+const readPreference = (key, fallback, allowed) => {
+  try {
+    const saved = localStorage.getItem(key);
+    return allowed.includes(saved) ? saved : fallback;
+  } catch {
+    return fallback;
+  }
+};
+const savePreference = (key, value) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    return;
+  }
+};
+let appearanceMode = readPreference(appearancePreferenceKey, "light", ["light", "dark", "system"]);
+visualThemeSelect.value = readPreference(themePreferenceKey, "standard", ["standard", "space", "heritage"]);
+appearanceSelect.value = appearanceMode;
+
+function applyVisualSettings() {
+  const root = document.documentElement;
+  root.dataset.visualTheme = visualThemeSelect.value;
+  root.dataset.theme = appearanceMode === "system"
+    ? systemAppearance?.matches ? "dark" : "light"
+    : appearanceMode;
+  if (familyData) renderFamily(familyData, centerPersonId);
+}
+
+applyVisualSettings();
+visualThemeSelect.addEventListener("change", () => {
+  savePreference(themePreferenceKey, visualThemeSelect.value);
+  applyVisualSettings();
+});
+appearanceSelect.addEventListener("change", () => {
+  appearanceMode = appearanceSelect.value;
+  savePreference(appearancePreferenceKey, appearanceMode);
+  applyVisualSettings();
+});
+systemAppearance?.addEventListener?.("change", () => {
+  if (appearanceMode === "system") applyVisualSettings();
+});
+if (systemAppearance && !systemAppearance.addEventListener) {
+  systemAppearance.addListener(() => {
+    if (appearanceMode === "system") applyVisualSettings();
+  });
+}
+
 function updatePersonChooser(individuals, selectedId) {
   const people = [...individuals.values()];
   const names = new Map();
@@ -61,14 +111,6 @@ function updatePersonChooser(individuals, selectedId) {
 personPicker.addEventListener("change", () => {
   const id = pickerIds.get(personPicker.value);
   if (familyData && id) renderFamily(familyData, id);
-});
-
-themeToggle.addEventListener("click", () => {
-  const isDark = document.documentElement.dataset.theme !== "dark";
-  document.documentElement.dataset.theme = isDark ? "dark" : "light";
-  themeToggle.setAttribute("aria-pressed", String(isDark));
-  themeToggle.textContent = isDark ? "Light mode" : "Dark mode";
-  if (familyData) renderFamily(familyData, centerPersonId);
 });
 
 simplifyNames.addEventListener("change", () => {

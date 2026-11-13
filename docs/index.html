@@ -35,7 +35,20 @@
           </label>
           <p class="relationship-legend">Card labels show each person’s relationship. Blue-gray connectors link parents and children; warm connectors mark spouse pairs.</p>
           <p id="color-legend" class="color-legend" hidden>M: blue; F: rose. Missing, unknown, and other values use neutral cards. This represents the recorded GEDCOM SEX field.</p>
-          <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <label class="select-setting" for="visual-theme">Visual theme
+            <select id="visual-theme">
+              <option value="standard">Standard</option>
+              <option value="space">Space</option>
+              <option value="heritage">Heritage</option>
+            </select>
+          </label>
+          <label class="select-setting" for="appearance">Appearance
+            <select id="appearance">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="system">System</option>
+            </select>
+          </label>
           <p id="explorer-help" hidden>Drag in Pan or Rotate mode. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it. Labels show each person’s relationship to the centered person.</p>
         </div>
       </div>

@@ -52,7 +52,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--panel-bg);
-  box-shadow: 0 3px 8px rgba(31, 53, 51, .08);
+  box-shadow: 0 3px 8px var(--panel-shadow);
 }
 
 .preview-tile strong { font-size: .88rem; }
@@ -84,19 +84,13 @@
   align-items: center;
   justify-content: center;
   padding: 10px 24px;
-  border: 1px solid #354f85;
+  border: 1px solid var(--action-border);
   border-radius: 10px;
-  background: #354f85;
-  color: #fff;
+  background: var(--action-bg);
+  color: var(--action-text);
   font: inherit;
   font-weight: 650;
   cursor: pointer;
-}
-
-:root[data-theme="dark"] .primary-button {
-  border-color: #8198df;
-  background: #8198df;
-  color: #171c27;
 }
 
 .upload input {

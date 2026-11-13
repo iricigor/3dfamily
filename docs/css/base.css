@@ -45,7 +45,7 @@ header {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--panel-bg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+  box-shadow: 0 8px 24px var(--menu-shadow);
 }
 
 .menu p { color: var(--muted); font-size: .9rem; }
@@ -56,6 +56,31 @@ header {
   gap: 6px;
   min-height: 44px;
   white-space: nowrap;
+}
+
+.select-setting {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.select-setting + .select-setting {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.select-setting select {
+  min-height: 40px;
+  max-width: 62%;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
 }
 
 :is(button, input, select, summary):focus-visible, .upload:focus-within {
