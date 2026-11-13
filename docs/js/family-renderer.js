@@ -1,5 +1,55 @@
 "use strict";
 
+function wrapName(name, context, maxWidth) {
+  const words = name.trim().split(/\s+/);
+  let best;
+  for (let split = 1; split < words.length; split++) {
+    const first = words.slice(0, split).join(" ");
+    const second = words.slice(split).join(" ");
+    const firstWidth = context.measureText(first).width;
+    const secondWidth = context.measureText(second).width;
+    if (Math.max(firstWidth, secondWidth) <= maxWidth &&
+        (!best || Math.abs(firstWidth - secondWidth) < best.difference)) {
+      best = { lines: [first, second], difference: Math.abs(firstWidth - secondWidth) };
+    }
+  }
+  if (best) return best.lines;
+
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    if (context.measureText(word).width <= maxWidth) {
+      const combined = line ? `${line} ${word}` : word;
+      if (line && context.measureText(combined).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = combined;
+      }
+      continue;
+    }
+    if (line) lines.push(line);
+    line = "";
+    const segmenter = typeof Intl.Segmenter === "function"
+      ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+      : null;
+    const characters = segmenter
+      ? [...segmenter.segment(word)].map(({ segment }) => segment)
+      : Array.from(word);
+    for (const character of characters) {
+      if (line && context.measureText(line + character).width > maxWidth) {
+        lines.push(line);
+        line = "";
+      }
+      line += character;
+    }
+    if (line) lines.push(line);
+    line = "";
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 function tileTexture(name, role, colors, person) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
@@ -11,34 +61,36 @@ function tileTexture(name, role, colors, person) {
     : "--card-bg";
   context.fillStyle = colors.getPropertyValue(fill).trim();
   context.fillRect(0, 0, 512, 320);
+  if (document.documentElement.dataset.visualTheme === "heritage") {
+    context.fillStyle = colors.getPropertyValue("--paper-grain").trim();
+    for (let grain = 0; grain < 160; grain++) {
+      context.fillRect((grain * 137) % 512, (grain * 89) % 320, 1, 1);
+    }
+  }
+  if (role === "center" && document.documentElement.dataset.visualTheme === "heritage") {
+    context.strokeStyle = colors.getPropertyValue("--center-inset").trim();
+    context.lineWidth = 3;
+    context.beginPath();
+    context.roundRect(12, 12, 488, 296, 18);
+    context.stroke();
+  }
   context.fillStyle = colors.getPropertyValue("--text").trim();
   context.textAlign = "center";
   context.textBaseline = "middle";
   const maxWidth = 420;
+  const nameFont = colors.getPropertyValue("--name-font").trim() || "system-ui, sans-serif";
   let size = 46;
-  context.font = `600 ${size}px system-ui, sans-serif`;
+  context.font = `600 ${size}px ${nameFont}`;
   while (context.measureText(name).width > maxWidth && size > 37) {
     size -= 1;
-    context.font = `600 ${size}px system-ui, sans-serif`;
+    context.font = `600 ${size}px ${nameFont}`;
   }
-  let lines = [name];
-  if (context.measureText(name).width > maxWidth) {
-    const words = name.trim().split(/\s+/);
-    let best;
-    for (let split = 1; split < words.length; split++) {
-      const first = words.slice(0, split).join(" ");
-      const second = words.slice(split).join(" ");
-      const firstWidth = context.measureText(first).width;
-      const secondWidth = context.measureText(second).width;
-      if (Math.max(firstWidth, secondWidth) <= maxWidth &&
-          (!best || Math.abs(firstWidth - secondWidth) < best.difference)) {
-        best = { lines: [first, second], difference: Math.abs(firstWidth - secondWidth) };
-      }
-    }
-    if (best) lines = best.lines;
-  }
+  const lines = context.measureText(name).width > maxWidth
+    ? wrapName(name, context, maxWidth)
+    : [name];
+  const lineHeight = Math.max(size + 4, Math.min(size + 8, 220 / Math.max(1, lines.length - 1)));
   lines.forEach((line, index) => {
-    context.fillText(line, 256, 132 + (index - (lines.length - 1) / 2) * (size + 8), maxWidth);
+    context.fillText(line, 256, 132 + (index - (lines.length - 1) / 2) * lineHeight);
   });
   context.font = "28px system-ui, sans-serif";
   context.fillStyle = colors.getPropertyValue("--person-muted").trim();
@@ -134,7 +186,7 @@ function addPerson(person, role, x, z, colors, center) {
   const context = shadowCanvas.getContext("2d");
   context.scale(1, 0.25);
   const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
-  gradient.addColorStop(0, "rgba(0,0,0,0.25)");
+  gradient.addColorStop(0, colors.getPropertyValue("--scene-shadow").trim());
   gradient.addColorStop(1, "rgba(0,0,0,0)");
   context.fillStyle = gradient;
   context.fillRect(0, 0, 256, 256);
@@ -291,7 +343,41 @@ function drawConnectors(routes) {
   }
 }
 
+function addSpaceGrid(colors) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+  context.strokeStyle = colors.getPropertyValue("--grid-line").trim();
+  context.lineWidth = 1;
+  for (let position = 0; position <= 512; position += 16) {
+    context.beginPath();
+    context.moveTo(position, 0);
+    context.lineTo(position, 512);
+    context.moveTo(0, position);
+    context.lineTo(512, position);
+    context.stroke();
+  }
+  context.globalCompositeOperation = "destination-in";
+  const fade = context.createLinearGradient(0, 0, 0, 512);
+  fade.addColorStop(0, "rgba(255, 255, 255, 0)");
+  fade.addColorStop(0.35, "rgba(255, 255, 255, 0.07)");
+  fade.addColorStop(1, "rgba(255, 255, 255, 0.2)");
+  context.fillStyle = fade;
+  context.fillRect(0, 0, 512, 512);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const grid = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, side: THREE.DoubleSide })
+  );
+  grid.rotation.x = -Math.PI / 2;
+  grid.position.y = 0.01;
+  members.add(grid);
+}
+
 function renderFamily({ individuals, families }, centerId) {
+  const initialFitPending = pendingInitialFit;
   const center = centerId === undefined
     ? individuals.values().next().value
     : individuals.get(centerId);
@@ -308,6 +394,7 @@ function renderFamily({ individuals, families }, centerId) {
   peopleList.replaceChildren();
   const colors = getComputedStyle(document.documentElement);
   world.background = new THREE.Color(colors.getPropertyValue("--page-bg").trim());
+  updateSceneLighting(colors);
   const positions = new Map();
   const place = (person, role, x, z) => {
     if (!positions.has(person.id)) positions.set(person.id, addPerson(person, role, x, z, colors, center));
@@ -341,13 +428,14 @@ function renderFamily({ individuals, families }, centerId) {
   );
   floor.rotation.x = -Math.PI / 2;
   members.add(floor);
+  if (document.documentElement.dataset.visualTheme === "space") addSpaceGrid(colors);
 
   const count = positions.size - 1;
   memberCount.textContent = `${count} family member${count === 1 ? "" : "s"} shown`;
   status.dataset.error = "false";
   status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} family member${count === 1 ? "" : "s"} shown.`;
   familyView.hidden = false;
-  pendingInitialFit = !familyData;
+  pendingInitialFit = !familyData || initialFitPending;
   layoutScene(pendingInitialFit);
   if (pendingInitialFit) {
     const version = uploadVersion;
