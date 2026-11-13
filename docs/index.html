@@ -102,6 +102,11 @@
       padding: 0 0 12px;
     }
 
+    .stage:focus-visible {
+      outline: 3px solid #172e78;
+      outline-offset: 2px;
+    }
+
     .scene {
       position: relative;
       min-width: 100%;
@@ -303,7 +308,7 @@
         <span style="--swatch:#ffdfb8">Spouses left</span>
         <span style="--swatch:#ffd2d8">Siblings right</span>
       </div>
-      <div class="stage" aria-label="Family view">
+      <div class="stage" tabindex="0" role="region" aria-label="Family view; scroll horizontally for more people">
         <div id="scene" class="scene"></div>
       </div>
     </div>
@@ -504,6 +509,8 @@
       status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} close family member${count === 1 ? "" : "s"} shown.`;
       familyView.hidden = false;
       layoutScene();
+      const stage = scene.parentElement;
+      stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2;
     }
 
     scene.addEventListener("click", (event) => {
