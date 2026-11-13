@@ -9,8 +9,56 @@
     :root {
       color-scheme: light;
       font-family: system-ui, sans-serif;
-      color: #172033;
-      background: #f3f6fb;
+      color: var(--text);
+      background: var(--page-bg);
+      --text: #172033;
+      --muted: #536078;
+      --border: #d5deeb;
+      --page-bg: #f3f6fb;
+      --panel-bg: #fff;
+      --ground: #e5ede9;
+      --ground-border: #cbd9d3;
+      --connector: #657892;
+      --spouse-connector: #a45b0e;
+      --focus: #172e78;
+      --error: #a12626;
+      --tile-shadow: #c6d1d1;
+      --tile-shadow-soft: rgba(31, 53, 51, 0.65);
+      --parent-bg: #f0edff;
+      --center-bg: #e9efff;
+      --center-border: #334f9d;
+      --center-shadow: #aab8d5;
+      --center-inset: #849be0;
+      --child-bg: #e8f7f1;
+      --spouse-bg: #fff3e5;
+      --sibling-bg: #fff0f2;
+      --person-muted: #46556d;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --text: #edf1fa;
+      --muted: #b0bbcf;
+      --border: #465167;
+      --page-bg: #171c27;
+      --panel-bg: #242b39;
+      --ground: #293a37;
+      --ground-border: #405650;
+      --connector: #a5b5cf;
+      --spouse-connector: #f0b467;
+      --focus: #a9bdff;
+      --error: #ff9a9a;
+      --tile-shadow: #35433f;
+      --tile-shadow-soft: rgba(0, 0, 0, 0.55);
+      --parent-bg: #353149;
+      --center-bg: #293653;
+      --center-border: #8198df;
+      --center-shadow: #465578;
+      --center-inset: #7189d1;
+      --child-bg: #294239;
+      --spouse-bg: #493a2c;
+      --sibling-bg: #49343a;
+      --person-muted: #c0cadd;
     }
 
     * {
@@ -34,6 +82,23 @@
       gap: 12px;
     }
 
+    .theme-toggle {
+      min-height: 44px;
+      margin-left: auto;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-bg);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .theme-toggle:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
     h1 {
       margin: 0;
       font-size: clamp(1.7rem, 4vw, 2.2rem);
@@ -47,7 +112,7 @@
 
     .intro {
       margin: 8px 0 12px;
-      color: #536078;
+      color: var(--muted);
     }
 
     .upload {
@@ -56,6 +121,7 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
+<<<<<<< HEAD
       min-height: 180px;
       padding: 24px;
       border: 2px dashed #9aaac0;
@@ -67,6 +133,12 @@
     .upload.is-dragging {
       border-color: #334f9d;
       background: #e9efff;
+=======
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-bg);
+>>>>>>> origin/main
     }
 
     input[type="file"] {
@@ -78,11 +150,11 @@
     .status {
       min-height: 1.5em;
       margin: 8px 0 0;
-      color: #536078;
+      color: var(--muted);
     }
 
     .status[data-error="true"] {
-      color: #a12626;
+      color: var(--error);
     }
 
     .key {
@@ -91,7 +163,7 @@
       justify-content: center;
       gap: 6px 16px;
       margin: 12px 0 4px;
-      color: #43516a;
+      color: var(--muted);
       font-size: 0.9rem;
     }
 
@@ -111,7 +183,7 @@
     }
 
     .stage:focus-visible {
-      outline: 3px solid #172e78;
+      outline: 3px solid var(--focus);
       outline-offset: 2px;
     }
 
@@ -131,20 +203,20 @@
     }
 
     .ground polygon {
-      fill: #e5ede9;
-      stroke: #cbd9d3;
+      fill: var(--ground);
+      stroke: var(--ground-border);
       stroke-width: 1;
     }
 
     .connector {
       fill: none;
-      stroke: #657892;
+      stroke: var(--connector);
       stroke-width: 2;
       stroke-linecap: round;
     }
 
     .connector.spouse {
-      stroke: #a45b0e;
+      stroke: var(--spouse-connector);
       stroke-width: 3;
       stroke-dasharray: 8 6;
     }
@@ -165,18 +237,34 @@
       align-content: center;
       justify-items: center;
       padding: 14px;
-      border: 1px solid #d5deeb;
+      border: 1px solid var(--border);
       border-radius: 0.7rem;
-      background: #fff;
+      background: var(--panel-bg);
       box-shadow:
-        3px 4px 0 #c6d1d1,
-        0 9px 10px -8px rgba(31, 53, 51, 0.65);
-      color: #172033;
+        3px 4px 0 var(--tile-shadow),
+        0 9px 10px -8px var(--tile-shadow-soft);
+      color: var(--text);
       font: inherit;
       text-align: center;
       cursor: pointer;
       transform: translate(-50%, -100%) scale(var(--scale));
       transform-origin: center bottom;
+    }
+
+    .person::before {
+      position: absolute;
+      z-index: 0;
+      top: 100%;
+      right: 0;
+      left: 0;
+      height: 100%;
+      border: 1px solid var(--border);
+      border-radius: inherit;
+      background: inherit;
+      content: "";
+      opacity: 0.22;
+      transform: scaleY(-1);
+      mask-image: linear-gradient(to bottom, #000, transparent 75%);
     }
 
     .person::after {
@@ -193,7 +281,7 @@
     }
 
     .person:focus-visible {
-      outline: 3px solid #172e78;
+      outline: 3px solid var(--focus);
       outline-offset: 4px;
     }
 
@@ -204,27 +292,27 @@
 
     .person small {
       margin-top: 6px;
-      color: #46556d;
+      color: var(--person-muted);
       font-size: 0.78rem;
     }
 
     .person.center {
       width: 196px;
       min-height: 112px;
-      border: 2px solid #334f9d;
-      background: #e9efff;
+      border: 2px solid var(--center-border);
+      background: var(--center-bg);
       box-shadow:
-        3px 4px 0 #aab8d5,
-        0 9px 10px -8px rgba(31, 53, 51, 0.65),
-        inset 0 0 0 2px #849be0;
+        3px 4px 0 var(--center-shadow),
+        0 9px 10px -8px var(--tile-shadow-soft),
+        inset 0 0 0 2px var(--center-inset);
     }
 
     .person.parent {
-      background: #f0edff;
+      background: var(--parent-bg);
     }
 
     .person.child {
-      background: #e8f7f1;
+      background: var(--child-bg);
     }
 
     .person.child::after {
@@ -235,11 +323,11 @@
     }
 
     .person.spouse {
-      background: #fff3e5;
+      background: var(--spouse-bg);
     }
 
     .person.sibling {
-      background: #fff0f2;
+      background: var(--sibling-bg);
     }
 
     [hidden] {
@@ -277,7 +365,7 @@
         display: block;
         grid-column: 1 / -1;
         margin: 0;
-        color: #43516a;
+        color: var(--muted);
         font-size: 0.9rem;
       }
 
@@ -290,7 +378,7 @@
         transform: none;
       }
 
-      .person::after {
+      .person::before, .person::after {
         display: none;
       }
     }
@@ -301,6 +389,7 @@
     <header>
       <img class="tree-icon" src="tree-icon.svg" width="48" height="48" alt="">
       <h1>3D Family</h1>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
     </header>
     <p class="intro">Upload a GEDCOM family tree to see the first person in the file and their close family.</p>
     <section class="upload" aria-label="Upload family tree">
@@ -329,7 +418,14 @@
     const status = document.querySelector("#status");
     const familyView = document.querySelector("#family-view");
     const scene = document.querySelector("#scene");
+    const themeToggle = document.querySelector("#theme-toggle");
     let familyData = null;
+
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.documentElement.dataset.theme !== "dark";
+      document.documentElement.dataset.theme = isDark ? "dark" : "light";
+      themeToggle.setAttribute("aria-pressed", String(isDark));
+    });
 
     function parseGedcom(text) {
       const individuals = new Map();
@@ -458,7 +554,7 @@
       const parentY = 20 + heightOf(parents, 0.9);
       const middleY = parentY + (parents.length ? 40 : 0) + heightOf([center, ...spouses, ...siblings], 1);
       const childY = middleY + (children.length ? 40 + heightOf(children, 1.05) : 0);
-      const height = childY + 36;
+      const height = childY + 64;
       scene.style.height = `${height}px`;
 
       const ground = scene.querySelector(".ground");
