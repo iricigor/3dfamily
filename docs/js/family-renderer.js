@@ -179,6 +179,7 @@ function addPerson(person, role, x, z, colors, center) {
   rear.userData.personId = person.id;
   members.add(rear);
   tiles.push(rear);
+  personCards.set(person.id, [backing, tile, rear]);
 
   const shadowCanvas = document.createElement("canvas");
   shadowCanvas.width = 256;
@@ -203,6 +204,20 @@ function addPerson(person, role, x, z, colors, center) {
   shadow.position.set(x, 0.01, z);
   members.add(shadow);
   return { x, z };
+}
+
+function setHoveredPerson(personId) {
+  if (hoveredPersonId === personId) return;
+  hoveredPersonId = personId;
+  for (const [id, meshes] of personCards) {
+    const highlighted = id === personId;
+    for (const mesh of meshes) {
+      mesh.scale.setScalar(highlighted ? 1.05 : 1);
+      mesh.material.transparent = Boolean(personId && !highlighted);
+      mesh.material.opacity = personId && !highlighted ? 0.5 : 1;
+    }
+  }
+  drawScene();
 }
 
 function addConnector(points, color) {
