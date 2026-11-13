@@ -1,0 +1,145 @@
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  margin: 2px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.key span::before {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--swatch);
+  content: "";
+}
+
+#family-view:not([hidden]) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar button, .toolbar input, .toolbar select {
+  min-height: 36px;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.toolbar button { cursor: pointer; }
+.toolbar button[aria-pressed="true"] {
+  border-color: var(--center-border);
+  background: var(--center-bg);
+  box-shadow: inset 0 0 0 1px var(--center-border);
+}
+.toolbar input { width: 10rem; }
+.toolbar select { width: 12rem; }
+
+.relatives {
+  position: relative;
+  align-self: flex-start;
+  z-index: 1;
+}
+
+.relatives summary { cursor: pointer; color: var(--muted); }
+#people {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: min(420px, calc(100vw - 24px));
+  max-height: 45vh;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+}
+
+.stage {
+  overflow: hidden;
+  flex: 1;
+  min-height: 220px;
+}
+
+.stage:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.scene {
+  width: 100%;
+  height: 100%;
+}
+
+.scene canvas {
+  display: block;
+  touch-action: none;
+}
+
+.person {
+  min-height: 44px;
+  margin: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.person:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.person small {
+  margin-left: 8px;
+  color: var(--person-muted);
+}
+
+.person.center {
+  border: 2px solid var(--center-border);
+  background: var(--center-bg);
+}
+
+.person.parent {
+  background: var(--parent-bg);
+}
+
+.person.child {
+  background: var(--child-bg);
+}
+
+.person.spouse {
+  background: var(--spouse-bg);
+}
+
+.person.sibling {
+  background: var(--sibling-bg);
+}
+
+.person.grandparent,
+.person.spouse-parent,
+.person.grandchild {
+  background: var(--second-bg);
+  opacity: 0.72;
+}

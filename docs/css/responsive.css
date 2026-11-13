@@ -1,0 +1,31 @@
+@media (max-width: 600px) {
+  main { padding: 6px; }
+  .welcome { padding: 24px 4px; }
+  .preview { gap: 6px; padding: 8px; }
+  .preview-tile { width: min(27vw, 108px); min-height: 64px; padding: 6px 3px; }
+  .preview-tile strong { font-size: .78rem; }
+  .key { font-size: .75rem; gap: 2px 8px; }
+  .toolbar { font-size: .85rem; }
+  .toolbar input { width: 8rem; }
+  .toolbar select { width: 10rem; flex: 1; }
+  .status { font-size: .85rem; }
+}
+@media (max-width: 600px) {
+  .exploring header {
+    inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) auto max(8px, env(safe-area-inset-left));
+  }
+  .picker-panel {
+    top: calc(max(8px, env(safe-area-inset-top)) + 54px);
+    left: max(8px, env(safe-area-inset-left));
+    width: min(270px, calc(100vw - 16px));
+    padding: 8px;
+  }
+  .toolbar {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    gap: 4px;
+    padding: 6px;
+  }
+  .toolbar button { min-height: 44px; padding: 6px 8px; font-size: .84rem; }
+  .toolbar-group { padding-right: 4px; }
+  #people { width: min(340px, calc(100vw - 16px)); }
+}
