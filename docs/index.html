@@ -14,7 +14,7 @@
       --text: #172033;
       --muted: #536078;
       --border: #d5deeb;
-      --page-bg: #f3f6fb;
+      --page-bg: #f4f6f5;
       --panel-bg: #fff;
       --ground: #e5ede9;
       --ground-border: #cbd9d3;
@@ -41,8 +41,8 @@
       --text: #edf1fa;
       --muted: #b0bbcf;
       --border: #465167;
-      --page-bg: #171c27;
-      --panel-bg: #242b39;
+      --page-bg: #1c232b;
+      --panel-bg: #29323b;
       --ground: #293a37;
       --ground-border: #405650;
       --connector: #a5b5cf;
@@ -73,11 +73,11 @@
     }
 
     main {
-      height: 100vh;
-      height: 100dvh;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding: 8px 12px;
+      padding: 12px 20px;
     }
 
     header {
@@ -144,29 +144,171 @@
       color: var(--muted);
     }
 
+    .welcome {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 12px 40px;
+      text-align: center;
+    }
+
+    .welcome-content {
+      width: min(100%, 620px);
+    }
+
+    .welcome h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      line-height: 1.15;
+      letter-spacing: -0.035em;
+    }
+
+    .welcome-copy {
+      max-width: 460px;
+      margin: 12px auto 24px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.55;
+    }
+
+    .preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: max-content;
+      max-width: 100%;
+      margin: 0 auto 28px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--panel-bg) 76%, var(--page-bg));
+    }
+
+    .preview-tile {
+      display: flex;
+      width: 116px;
+      min-height: 68px;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-bg);
+      box-shadow: 0 3px 8px rgba(31, 53, 51, .08);
+    }
+
+    .preview-tile strong { font-size: .88rem; }
+    .preview-tile span { color: var(--muted); font-size: .72rem; }
+    .preview-caption { margin: 0; color: var(--muted); font-size: .75rem; }
+
     .upload {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      min-height: 180px;
-      padding: 24px;
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      background: var(--panel-bg);
+      gap: 10px;
+      width: min(100%, 480px);
+      padding: 18px;
+      border: 1px dashed transparent;
+      border-radius: 16px;
       text-align: center;
+      transition: border-color .15s, background-color .15s;
     }
 
     .upload.is-dragging {
       border-color: var(--center-border);
-      background: var(--center-bg);
+      background: color-mix(in srgb, var(--center-bg) 55%, transparent);
+    }
+
+    .primary-button {
+      display: inline-flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 24px;
+      border: 1px solid #354f85;
+      border-radius: 10px;
+      background: #354f85;
+      color: #fff;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    :root[data-theme="dark"] .primary-button {
+      border-color: #8198df;
+      background: #8198df;
+      color: #171c27;
+    }
+
+    .upload input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .drop-hint { margin: 0; color: var(--muted); font-size: .9rem; }
+    .upload input:focus-visible + .primary-button {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .format-hint {
+      max-width: 440px;
+      margin: 8px auto 0;
+      color: var(--muted);
+      font-size: .86rem;
+      line-height: 1.5;
+    }
+
+    .export-help {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .export-help summary {
+      width: fit-content;
+      margin: auto;
+      cursor: pointer;
+    }
+
+    .export-help p {
+      max-width: 440px;
+      margin: 8px auto 0;
+      line-height: 1.5;
+    }
+
+    .welcome.loaded {
+      flex: 0 0 auto;
+      align-items: flex-start;
+      padding: 8px 0 0;
+      text-align: left;
+    }
+
+    .welcome.loaded .welcome-content,
+    .welcome.loaded .format-hint,
+    .welcome.loaded .export-help {
+      display: none;
+    }
+
+    .upload.loaded .drop-hint,
+    .upload.loaded #try-example {
+      display: none;
     }
 
     .upload.loaded {
       flex-direction: row;
       justify-content: flex-start;
       min-height: 0;
+      width: auto;
       padding: 4px 0;
       border: 0;
       background: transparent;
@@ -185,8 +327,19 @@
       position: absolute;
       width: 1px;
       height: 1px;
-      min-height: 0;
-      opacity: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .upload.loaded .primary-button {
+      min-height: 36px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      color: var(--text);
+      font-weight: 400;
     }
 
     #filename {
@@ -202,14 +355,32 @@
     }
 
     .status {
+      max-width: min(100%, 620px);
       min-height: 1.5em;
       margin: 8px 0 0;
       color: var(--muted);
     }
 
+    .welcome + .status { align-self: center; text-align: center; }
+
     .status[data-error="true"] {
       color: var(--error);
     }
+
+    .status[data-loading="true"]::before {
+      display: inline-block;
+      width: .75em;
+      height: .75em;
+      margin-right: 8px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      content: "";
+      vertical-align: -1px;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .key {
       display: flex;
@@ -363,6 +534,10 @@
 
     @media (max-width: 600px) {
       main { padding: 6px; }
+      .welcome { padding: 24px 4px; }
+      .preview { gap: 6px; padding: 8px; }
+      .preview-tile { width: min(27vw, 108px); min-height: 64px; padding: 6px 3px; }
+      .preview-tile strong { font-size: .78rem; }
       .key { font-size: .75rem; gap: 2px 8px; }
       .toolbar { font-size: .85rem; }
       .toolbar input { width: 8rem; }
@@ -382,16 +557,33 @@
           <label class="name-setting"><input id="show-second-relatives" type="checkbox" checked> Show 2nd relatives</label>
           <label class="name-setting"><input id="simplify-names" type="checkbox" checked> Simplify surnames</label>
           <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
-          <p>Drag in Pan or Rotate mode. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it.</p>
+          <p id="explorer-help" hidden>Drag in Pan or Rotate mode. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it.</p>
         </div>
       </div>
     </header>
-    <section class="upload" aria-label="Upload family tree">
-      <label for="gedcom-file" id="upload-label">Choose a GEDCOM file (.ged) or drop it here</label>
-      <input id="gedcom-file" type="file" accept=".ged,.gedcom,text/plain">
-      <span id="filename" hidden></span>
+    <section id="welcome" class="welcome" aria-labelledby="welcome-heading">
+      <div class="welcome-content">
+        <h2 id="welcome-heading">See your family from a new perspective.</h2>
+        <p class="welcome-copy">Open your family tree and explore the people and connections around you.</p>
+        <figure class="preview" aria-label="Illustrative preview with fictional family names">
+          <div class="preview-tile"><strong>Alex Example</strong><span>Parent</span></div>
+          <div class="preview-tile"><strong>Sam Example</strong><span>Center person</span></div>
+          <div class="preview-tile"><strong>Jamie Example</strong><span>Child</span></div>
+        </figure>
+      </div>
+      <section class="upload" aria-label="Open a family tree file">
+        <input id="gedcom-file" type="file" accept=".ged,.gedcom,text/plain">
+        <label for="gedcom-file" id="upload-label" class="primary-button">Open family tree</label>
+        <p class="drop-hint">or drop your .ged file here</p>
+        <button id="try-example" class="theme-toggle" type="button">Try an example</button>
+      </section>
+      <p class="format-hint">GEDCOM (.ged) is a family-tree file you can export from genealogy software. Your file stays on this device.</p>
+      <details class="export-help">
+        <summary>How do I get this file?</summary>
+        <p>In your genealogy software, look for an Export option and choose GEDCOM (.ged). Save the exported file, then open it here.</p>
+      </details>
     </section>
-    <p id="status" class="status" role="status" aria-live="polite">Your file is read in this page and is not uploaded to a server.</p>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
     <div id="family-view" hidden>
       <div class="toolbar" aria-label="Family view controls">
         <label for="person-search">Choose person</label>
@@ -432,6 +624,7 @@
 
     const fileInput = document.querySelector("#gedcom-file");
     const uploadArea = document.querySelector(".upload");
+    const welcome = document.querySelector("#welcome");
     const status = document.querySelector("#status");
     const familyView = document.querySelector("#family-view");
     const scene = document.querySelector("#scene");
@@ -551,6 +744,26 @@
 
       return { individuals, families };
     }
+
+    const exampleGedcom = `0 HEAD
+1 SOUR 3D Family example
+0 @I1@ INDI
+1 NAME Sam /Example/
+1 SEX X
+1 FAMC @F1@
+0 @I2@ INDI
+1 NAME Alex /Example/
+1 SEX X
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Jamie /Example/
+1 SEX X
+1 FAMS @F1@
+0 @F1@ FAM
+1 HUSB @I2@
+1 WIFE @I3@
+1 CHIL @I1@
+0 TRLR`;
 
     function relativesOf(center, individuals, families) {
       const parents = new Set();
@@ -1154,8 +1367,8 @@
       uploadArea.classList.add("is-dragging");
     });
 
-    uploadArea.addEventListener("dragleave", () => {
-      uploadArea.classList.remove("is-dragging");
+    uploadArea.addEventListener("dragleave", (event) => {
+      if (!uploadArea.contains(event.relatedTarget)) uploadArea.classList.remove("is-dragging");
     });
 
     uploadArea.addEventListener("drop", (event) => {
@@ -1167,25 +1380,28 @@
       }
     });
 
-    fileInput.addEventListener("change", async () => {
+    async function openFamilyFile(file) {
       const version = ++uploadVersion;
-      familyView.hidden = true;
-      clearScene();
-      peopleList.replaceChildren();
-      familyData = null;
-      uploadArea.classList.remove("loaded");
-      document.querySelector("#upload-label").textContent = "Choose a GEDCOM file (.ged) or drop it here";
-      document.querySelector("#filename").hidden = true;
-      personSearch.value = "";
-      delete status.dataset.error;
-      const file = fileInput.files && fileInput.files[0];
       if (!file) return;
 
+      delete status.dataset.error;
+      status.dataset.loading = "true";
+      status.textContent = `Opening ${file.name}…`;
       try {
         const data = parseGedcom(await file.text());
+        if (!data.individuals.size) {
+          throw new Error("We couldn't find any people in that file. Choose a GEDCOM (.ged) family-tree export and try again.");
+        }
         if (version !== uploadVersion) return;
         await initializeScene();
         if (version !== uploadVersion) return;
+        familyData = null;
+        familyView.hidden = true;
+        clearScene();
+        peopleList.replaceChildren();
+        personSearch.value = "";
+        document.querySelector("#explorer-help").hidden = false;
+        welcome.classList.add("loaded");
         uploadArea.classList.add("loaded");
         document.querySelector("#upload-label").textContent = "Change file";
         const filename = document.querySelector("#filename");
@@ -1195,12 +1411,18 @@
         familyData = data;
       } catch (error) {
         if (version !== uploadVersion) return;
-        uploadArea.classList.remove("loaded");
-        document.querySelector("#upload-label").textContent = "Choose a GEDCOM file (.ged) or drop it here";
-        document.querySelector("#filename").hidden = true;
         status.dataset.error = "true";
-        status.textContent = error instanceof Error ? error.message : "The GEDCOM file could not be read.";
+        status.textContent = error instanceof Error
+          ? error.message
+          : "We couldn't open that family-tree file. Please try another GEDCOM (.ged) file.";
+      } finally {
+        if (version === uploadVersion) delete status.dataset.loading;
       }
+    }
+
+    fileInput.addEventListener("change", () => openFamilyFile(fileInput.files?.[0]));
+    document.querySelector("#try-example").addEventListener("click", () => {
+      openFamilyFile(new File([exampleGedcom], "example-family.ged", { type: "text/plain" }));
     });
   </script>
 </body>
