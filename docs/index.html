@@ -171,8 +171,9 @@
     }
 
     .stage {
-      overflow: auto hidden;
-      padding: 0 0 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 12px;
     }
 
     .stage:focus-visible {
@@ -181,96 +182,24 @@
     }
 
     .scene {
-      position: relative;
-      min-width: 100%;
-      margin: 0 auto;
-      isolation: isolate;
+      height: clamp(360px, 65vh, 680px);
     }
 
-    .ground {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .ground polygon {
-      fill: var(--ground);
-      stroke: var(--ground-border);
-      stroke-width: 1;
-    }
-
-    .connector {
-      fill: none;
-      stroke: var(--connector);
-      stroke-width: 2;
-      stroke-linecap: round;
-    }
-
-    .connector.spouse {
-      stroke: var(--spouse-connector);
-      stroke-width: 3;
-      stroke-dasharray: 8 6;
-    }
-
-    .group {
-      display: contents;
-    }
-
-    .group h2 {
-      display: none;
+    .scene canvas {
+      display: block;
+      touch-action: none;
     }
 
     .person {
-      position: absolute;
-      display: grid;
-      width: 174px;
-      min-height: 104px;
-      align-content: center;
-      justify-items: center;
-      padding: 14px;
+      min-height: 44px;
+      margin: 4px;
+      padding: 8px 12px;
       border: 1px solid var(--border);
-      border-radius: 0.7rem;
+      border-radius: 10px;
       background: var(--panel-bg);
-      box-shadow:
-        3px 4px 0 var(--tile-shadow),
-        0 9px 10px -8px var(--tile-shadow-soft);
       color: var(--text);
       font: inherit;
-      text-align: center;
       cursor: pointer;
-      transform: translate(-50%, -100%) scale(var(--scale));
-      transform-origin: center bottom;
-    }
-
-    .person::before {
-      position: absolute;
-      z-index: 0;
-      top: 100%;
-      right: 0;
-      left: 0;
-      height: 100%;
-      border: 1px solid var(--border);
-      border-radius: inherit;
-      background: inherit;
-      content: "";
-      opacity: 0.22;
-      transform: scaleY(-1);
-      mask-image: linear-gradient(to bottom, #000, transparent 75%);
-    }
-
-    .person::after {
-      position: absolute;
-      z-index: -1;
-      right: -5%;
-      bottom: -11px;
-      left: -5%;
-      height: 12px;
-      border-radius: 50%;
-      background: rgba(37, 58, 55, 0.2);
-      filter: blur(4px);
-      content: "";
     }
 
     .person:focus-visible {
@@ -278,26 +207,14 @@
       outline-offset: 4px;
     }
 
-    .person strong {
-      line-height: 1.25;
-      overflow-wrap: anywhere;
-    }
-
     .person small {
-      margin-top: 6px;
+      margin-left: 8px;
       color: var(--person-muted);
-      font-size: 0.78rem;
     }
 
     .person.center {
-      width: 196px;
-      min-height: 112px;
       border: 2px solid var(--center-border);
       background: var(--center-bg);
-      box-shadow:
-        3px 4px 0 var(--center-shadow),
-        0 9px 10px -8px var(--tile-shadow-soft),
-        inset 0 0 0 2px var(--center-inset);
     }
 
     .person.parent {
@@ -306,13 +223,6 @@
 
     .person.child {
       background: var(--child-bg);
-    }
-
-    .person.child::after {
-      right: -12%;
-      left: -12%;
-      height: 16px;
-      filter: blur(5px);
     }
 
     .person.spouse {
@@ -333,47 +243,6 @@
         padding-top: 16px;
       }
 
-      .stage {
-        overflow: visible;
-      }
-
-      .scene {
-        display: grid;
-        gap: 14px;
-        width: 100% !important;
-        height: auto !important;
-      }
-
-      .ground {
-        display: none;
-      }
-
-      .group {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
-        gap: 8px;
-      }
-
-      .group h2 {
-        display: block;
-        grid-column: 1 / -1;
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-
-      .person, .person.center {
-        position: relative;
-        top: auto !important;
-        left: auto !important;
-        width: 100%;
-        min-height: 88px;
-        transform: none;
-      }
-
-      .person::before, .person::after {
-        display: none;
-      }
     }
   </style>
 </head>
@@ -398,11 +267,24 @@
         <span style="--swatch:#ffdfb8">Spouses left</span>
         <span style="--swatch:#ffd2d8">Siblings right</span>
       </div>
-      <div class="stage" tabindex="0" role="region" aria-label="Family view; scroll horizontally for more people">
+      <p class="intro" id="scene-help">Drag to orbit, scroll or pinch to zoom, and right-drag to pan. Select a tile to center that person.</p>
+      <div class="stage" tabindex="0" role="region" aria-label="3D family view" aria-describedby="scene-help">
         <div id="scene" class="scene"></div>
       </div>
+      <details>
+        <summary>Choose center person (keyboard accessible)</summary>
+        <div id="people"></div>
+      </details>
     </div>
   </main>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
   <script>
     "use strict";
 
@@ -411,13 +293,21 @@
     const status = document.querySelector("#status");
     const familyView = document.querySelector("#family-view");
     const scene = document.querySelector("#scene");
+    const peopleList = document.querySelector("#people");
     const themeToggle = document.querySelector("#theme-toggle");
     let familyData = null;
+    let centerPersonId;
+    let THREE, renderer, world, camera, controls, members;
+    let tiles = [];
+    let sceneReady;
+    let uploadVersion = 0;
 
     themeToggle.addEventListener("click", () => {
       const isDark = document.documentElement.dataset.theme !== "dark";
       document.documentElement.dataset.theme = isDark ? "dark" : "light";
       themeToggle.setAttribute("aria-pressed", String(isDark));
+      themeToggle.textContent = isDark ? "Light mode" : "Dark mode";
+      if (familyData) renderFamily(familyData, centerPersonId);
     });
 
     function parseGedcom(text) {
@@ -498,7 +388,116 @@
       };
     }
 
-    function addPerson(person, role, group) {
+    function initializeScene() {
+      return sceneReady ??= createScene().catch((error) => {
+        sceneReady = null;
+        throw error;
+      });
+    }
+
+    async function createScene() {
+      try {
+        THREE = await import("three");
+        const { OrbitControls } = await import("three/addons/controls/OrbitControls.js");
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.domElement.setAttribute("aria-hidden", "true");
+        scene.append(renderer.domElement);
+        world = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.minPolarAngle = Math.PI / 6;
+        controls.maxPolarAngle = Math.PI / 2.2;
+        controls.minAzimuthAngle = -Math.PI / 3;
+        controls.maxAzimuthAngle = Math.PI / 3;
+        controls.addEventListener("change", drawScene);
+        world.add(new THREE.HemisphereLight(0xffffff, 0x536078, 1.4));
+        const light = new THREE.DirectionalLight(0xffffff, 1.5);
+        light.position.set(-3, 10, 6);
+        world.add(light);
+        members = new THREE.Group();
+        world.add(members);
+
+        let pointerStart;
+        renderer.domElement.addEventListener("pointerdown", (event) => {
+          if (event.isPrimary) pointerStart = { x: event.clientX, y: event.clientY };
+        });
+        renderer.domElement.addEventListener("pointerup", (event) => {
+          if (!familyData || !event.isPrimary || event.button !== 0 || !pointerStart ||
+              Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 5) return;
+          const rect = renderer.domElement.getBoundingClientRect();
+          const pointer = new THREE.Vector2(
+            (event.clientX - rect.left) / rect.width * 2 - 1,
+            -(event.clientY - rect.top) / rect.height * 2 + 1
+          );
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(pointer, camera);
+          const hit = raycaster.intersectObjects(tiles, false)[0];
+          if (hit) renderFamily(familyData, hit.object.userData.personId);
+        });
+      } catch {
+        controls?.dispose();
+        renderer?.dispose();
+        renderer = null;
+        scene.replaceChildren();
+        throw new Error("The 3D view needs WebGL and access to the Three.js CDN. Enable WebGL and check your connection, then choose the file again.");
+      }
+    }
+
+    function drawScene() {
+      if (renderer && !familyView.hidden) renderer.render(world, camera);
+    }
+
+    function clearScene() {
+      if (!members) return;
+      members.traverse((object) => {
+        object.geometry?.dispose();
+        if (object.material) {
+          object.material.map?.dispose();
+          object.material.dispose();
+        }
+      });
+      members.clear();
+      tiles = [];
+    }
+
+    function tileTexture(person, role, colors) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 320;
+      const context = canvas.getContext("2d");
+      context.fillStyle = colors.getPropertyValue(`--${role}-bg`).trim();
+      context.fillRect(0, 0, 512, 320);
+      context.strokeStyle = colors.getPropertyValue(role === "center" ? "--center-border" : "--border").trim();
+      context.lineWidth = role === "center" ? 12 : 6;
+      context.strokeRect(6, 6, 500, 308);
+      context.fillStyle = colors.getPropertyValue("--text").trim();
+      context.textAlign = "center";
+      const name = person.name || `Unknown person (${person.id})`;
+      let size = 40;
+      let lines;
+      do {
+        context.font = `600 ${size}px system-ui, sans-serif`;
+        lines = [""];
+        for (const character of name) {
+          const last = lines.length - 1;
+          if (context.measureText(lines[last] + character).width > 460) lines.push(character);
+          else lines[last] += character;
+        }
+        size -= 2;
+      } while (lines.length * (size + 8) > 190 && size > 12);
+      lines.slice(0, 9).forEach((line, index) => {
+        context.fillText(line, 256, 130 + (index - (Math.min(lines.length, 9) - 1) / 2) * (size + 8));
+      });
+      context.font = "28px system-ui, sans-serif";
+      context.fillStyle = colors.getPropertyValue("--person-muted").trim();
+      context.fillText(role === "center" ? "Center person" : role, 256, 272);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
+    function addPerson(person, role, x, z, colors) {
       const card = document.createElement("button");
       card.type = "button";
       card.className = `person ${role}`;
@@ -509,78 +508,96 @@
       const label = document.createElement("small");
       label.textContent = role === "center" ? "Center person" : role;
       card.append(name, label);
-      group.append(card);
-    }
+      peopleList.append(card);
 
-    function addGroup(people, role, title) {
-      if (!people.length) return;
-      const group = document.createElement("section");
-      group.className = "group";
-      group.setAttribute("aria-label", title);
-      const heading = document.createElement("h2");
-      heading.textContent = title;
-      group.append(heading);
-      people.forEach((person) => addPerson(person, role, group));
-      scene.append(group);
-    }
-
-    function layoutScene() {
-      if (familyView.hidden || window.matchMedia("(max-width: 700px)").matches) return;
-
-      const cards = (role) => [...scene.querySelectorAll(`.person.${role}`)];
-      const parents = cards("parent");
-      const spouses = cards("spouse");
-      const center = cards("center")[0];
-      const siblings = cards("sibling");
-      const children = cards("child");
-      if (!center) return;
-
-      const width = Math.max(
-        scene.parentElement.clientWidth, 600,
-        parents.length * 190 + 40,
-        children.length * 205 + 40,
-        2 * (220 + Math.max(spouses.length - 1, siblings.length - 1, 0) * 190 + 110)
+      const height = role === "center" ? 2.1 : 1.9;
+      const width = role === "center" ? 3.36 : 3.04;
+      const texture = tileTexture(person, role, colors);
+      const tile = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
       );
-      scene.style.width = `${width}px`;
+      tile.position.set(x, height / 2, z);
+      tile.userData.personId = person.id;
+      members.add(tile);
+      tiles.push(tile);
 
-      const heightOf = (items, scale) => Math.max(0, ...items.map((card) => card.offsetHeight * scale));
-      const parentY = 20 + heightOf(parents, 0.9);
-      const middleY = parentY + (parents.length ? 40 : 0) + heightOf([center, ...spouses, ...siblings], 1);
-      const childY = middleY + (children.length ? 40 + heightOf(children, 1.05) : 0);
-      const height = childY + 64;
-      scene.style.height = `${height}px`;
+      const reflectionCanvas = document.createElement("canvas");
+      reflectionCanvas.width = 512;
+      reflectionCanvas.height = 320;
+      const context = reflectionCanvas.getContext("2d");
+      context.translate(0, 320);
+      context.scale(1, -1);
+      context.drawImage(texture.image, 0, 0);
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      const fade = context.createLinearGradient(0, 0, 0, 320);
+      fade.addColorStop(0, "rgba(255,255,255,0.35)");
+      fade.addColorStop(1, "rgba(255,255,255,0)");
+      context.globalCompositeOperation = "destination-in";
+      context.fillStyle = fade;
+      context.fillRect(0, 0, 512, 320);
+      const reflectionTexture = new THREE.CanvasTexture(reflectionCanvas);
+      reflectionTexture.colorSpace = THREE.SRGBColorSpace;
+      const reflection = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshBasicMaterial({ map: reflectionTexture, transparent: true, depthWrite: false })
+      );
+      reflection.rotation.x = -Math.PI / 2;
+      reflection.position.set(x, 0.015, z + height / 2);
+      members.add(reflection);
 
-      const ground = scene.querySelector(".ground");
-      ground.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      ground.replaceChildren();
-      const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-      const groundTop = (parents.length ? parentY : middleY) - 8;
-      polygon.setAttribute("points", `20,${groundTop} ${width - 20},${groundTop} ${width},${height} 0,${height}`);
-      ground.append(polygon);
+      if (role !== "center") {
+        const start = new THREE.Vector3(0, role === "parent" ? 2.1 : 0.06, 0);
+        const end = new THREE.Vector3(x, role === "child" ? height : 0.06, z);
+        const curve = new THREE.LineCurve3(start, end);
+        const color = colors.getPropertyValue(role === "spouse" ? "--spouse-connector" : "--connector").trim();
+        members.add(new THREE.Mesh(
+          new THREE.TubeGeometry(curve, 1, 0.025, 8, false),
+          new THREE.MeshBasicMaterial({ color })
+        ));
+        members.add(new THREE.Mesh(
+          new THREE.TubeGeometry(curve, 1, 0.07, 8, false),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending })
+        ));
+      }
+    }
 
-      const positions = [];
-      const place = (card, x, y, scale, role) => {
-        card.style.left = `${x}px`;
-        card.style.top = `${y}px`;
-        card.style.setProperty("--scale", scale);
-        positions.push({ x, y, role });
-      };
-      const middleX = width / 2;
-      parents.forEach((card, index) => place(card, middleX + (index - (parents.length - 1) / 2) * 190, parentY, 0.9, "parent"));
-      place(center, middleX, middleY, 1, "center");
-      spouses.forEach((card, index) => place(card, middleX - 220 - index * 190, middleY, 1, "spouse"));
-      siblings.forEach((card, index) => place(card, middleX + 220 + index * 190, middleY, 1, "sibling"));
-      children.forEach((card, index) => place(card, middleX + (index - (children.length - 1) / 2) * 205, childY, 1.05, "child"));
-
-      positions.filter((position) => position.role !== "center").forEach((position) => {
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("class", `connector ${position.role}`);
-        line.setAttribute("x1", middleX);
-        line.setAttribute("y1", middleY);
-        line.setAttribute("x2", position.x);
-        line.setAttribute("y2", position.y);
-        ground.append(line);
-      });
+    function layoutScene(fit = false) {
+      if (!renderer || familyView.hidden) return;
+      const width = scene.clientWidth;
+      const height = scene.clientHeight;
+      camera.aspect = width / height;
+      if (fit === true) {
+        const bounds = new THREE.Box3();
+        tiles.forEach((tile) => bounds.expandByObject(tile));
+        const target = bounds.getCenter(new THREE.Vector3());
+        target.y = 0.8;
+        bounds.max.z += 2;
+        const direction = new THREE.Vector3(0, 0.48, 0.88).normalize();
+        const up = new THREE.Vector3(0, direction.z, -direction.y);
+        const tanVertical = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+        let distance = 8;
+        for (const x of [bounds.min.x, bounds.max.x]) {
+          for (const y of [bounds.min.y, bounds.max.y]) {
+            for (const z of [bounds.min.z, bounds.max.z]) {
+              const offset = new THREE.Vector3(x, y, z).sub(target);
+              const depth = offset.dot(direction);
+              distance = Math.max(distance,
+                Math.abs(offset.x) * 1.15 / (tanVertical * camera.aspect) + depth,
+                Math.abs(offset.dot(up)) * 1.15 / tanVertical + depth);
+            }
+          }
+        }
+        controls.target.copy(target);
+        camera.position.copy(target).add(direction.multiplyScalar(distance));
+        camera.far = Math.max(1000, distance * 5);
+        controls.minDistance = 4;
+        controls.maxDistance = distance * 3;
+        controls.update();
+      }
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+      drawScene();
     }
 
     function renderFamily({ individuals, families }, centerId) {
@@ -590,35 +607,44 @@
       if (!center) throw new Error("No people were found. Choose a GEDCOM file containing INDI records.");
 
       const relatives = relativesOf(center, individuals, families);
-      scene.replaceChildren();
-      const ground = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      ground.classList.add("ground");
-      ground.setAttribute("aria-hidden", "true");
-      scene.append(ground);
-      addGroup(relatives.parents, "parent", "Parents");
-      addGroup(relatives.spouses, "spouse", "Spouses");
-      addGroup([center], "center", "Center person");
-      addGroup(relatives.siblings, "sibling", "Siblings");
-      addGroup(relatives.children, "child", "Children");
+      centerPersonId = center.id;
+      clearScene();
+      peopleList.replaceChildren();
+      const colors = getComputedStyle(document.documentElement);
+      world.background = new THREE.Color(colors.getPropertyValue("--page-bg").trim());
+      const row = (people, role, z) => people.forEach((person, index) =>
+        addPerson(person, role, (index - (people.length - 1) / 2) * 3.8, z, colors));
+      row(relatives.parents, "parent", -5);
+      addPerson(center, "center", 0, 0, colors);
+      relatives.spouses.forEach((person, index) => addPerson(person, "spouse", -4 - index * 3.8, 0, colors));
+      relatives.siblings.forEach((person, index) => addPerson(person, "sibling", 4 + index * 3.8, 0, colors));
+      row(relatives.children, "child", 5);
+      const floorWidth = Math.max(18, ...tiles.map((tile) => Math.abs(tile.position.x) * 2 + 8));
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(floorWidth, 22),
+        new THREE.MeshStandardMaterial({
+          color: colors.getPropertyValue("--ground").trim(), metalness: 0.3, roughness: 0.18
+        })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      members.add(floor);
 
       const count = relatives.parents.length + relatives.children.length +
         relatives.spouses.length + relatives.siblings.length;
       status.dataset.error = "false";
       status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} close family member${count === 1 ? "" : "s"} shown.`;
       familyView.hidden = false;
-      layoutScene();
-      const stage = scene.parentElement;
-      stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2;
+      layoutScene(true);
     }
 
-    scene.addEventListener("click", (event) => {
+    peopleList.addEventListener("click", (event) => {
       const card = event.target.closest(".person");
-      if (!familyData || !card || !scene.contains(card)) return;
+      if (!familyData || !card || !peopleList.contains(card)) return;
       renderFamily(familyData, card.dataset.personId);
-      scene.querySelector(".person.center").focus();
+      peopleList.querySelector(".person.center").focus();
     });
 
-    window.addEventListener("resize", layoutScene);
+    window.addEventListener("resize", () => layoutScene(true));
 
     uploadArea.addEventListener("dragover", (event) => {
       event.preventDefault();
@@ -639,8 +665,10 @@
     });
 
     fileInput.addEventListener("change", async () => {
+      const version = ++uploadVersion;
       familyView.hidden = true;
-      scene.replaceChildren();
+      clearScene();
+      peopleList.replaceChildren();
       familyData = null;
       delete status.dataset.error;
       const file = fileInput.files && fileInput.files[0];
@@ -648,9 +676,13 @@
 
       try {
         const data = parseGedcom(await file.text());
+        if (version !== uploadVersion) return;
+        await initializeScene();
+        if (version !== uploadVersion) return;
         renderFamily(data);
         familyData = data;
       } catch (error) {
+        if (version !== uploadVersion) return;
         status.dataset.error = "true";
         status.textContent = error instanceof Error ? error.message : "The GEDCOM file could not be read.";
       }
