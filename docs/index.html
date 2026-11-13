@@ -110,9 +110,13 @@
       justify-items: center;
       padding: 14px;
       border: 1px solid #d5deeb;
-      border-radius: 14px;
+      border-radius: 1.5rem;
       background: #fff;
-      box-shadow: 0 12px 24px rgb(30 45 70 / 12%);
+      box-shadow:
+        0 20px 40px -15px rgba(0, 0, 0, 0.1),
+        inset 0 -4px 6px rgba(0, 0, 0, 0.08),
+        inset 0 4px 6px rgba(255, 255, 255, 0.6);
+      color: #172033;
       text-align: center;
       transform: translate3d(var(--x), var(--y), var(--z)) translate(-50%, -50%);
       transform-style: preserve-3d;
@@ -135,7 +139,11 @@
       min-height: 126px;
       border: 2px solid #334f9d;
       background: #e9efff;
-      box-shadow: 0 16px 30px rgb(30 45 70 / 18%);
+      box-shadow:
+        0 24px 44px -12px rgba(30, 45, 70, 0.24),
+        inset 0 -4px 6px rgba(30, 45, 70, 0.1),
+        inset 0 4px 6px rgba(255, 255, 255, 0.75),
+        inset 0 0 0 2px #849be0;
     }
 
     .person.parent {
