@@ -25,8 +25,6 @@ main.exploring {
 .exploring .menu {
   top: calc(100% + 8px);
   right: 0;
-  max-height: calc(100dvh - 80px);
-  overflow: auto;
   z-index: 4;
 }
 .menu-action {
