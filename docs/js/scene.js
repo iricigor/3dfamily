@@ -26,16 +26,27 @@ async function createScene() {
     controls.maxDistance = 2000;
     const panButton = document.querySelector("#pan-mode");
     const rotateButton = document.querySelector("#rotate-mode");
-    const setMode = (mode) => {
-      controls.mouseButtons.LEFT = mode === "pan" ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE;
+    const cameraInteraction = document.querySelector("#camera-interaction");
+    let mode = "rotate";
+    let spacePressed = false;
+    const setMode = (nextMode) => {
+      mode = nextMode;
+      controls.mouseButtons.LEFT = !cameraModeSelector.checked && spacePressed
+        ? THREE.MOUSE.PAN
+        : mode === "pan" ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE;
       controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
       controls.touches.ONE = mode === "pan" ? THREE.TOUCH.PAN : THREE.TOUCH.ROTATE;
       controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
       panButton?.setAttribute("aria-pressed", String(mode === "pan"));
       rotateButton?.setAttribute("aria-pressed", String(mode === "rotate"));
     };
+    const updateCameraModeSetting = () => {
+      cameraInteraction.hidden = !cameraModeSelector.checked;
+      if (!cameraModeSelector.checked) setMode("rotate");
+    };
     panButton?.addEventListener("click", () => setMode("pan"));
     rotateButton?.addEventListener("click", () => setMode("rotate"));
+    cameraModeSelector.addEventListener("change", updateCameraModeSetting);
     document.querySelector("#fit-family")?.addEventListener("click", () => {
       pendingInitialFit = false;
       layoutScene(true);
@@ -47,6 +58,24 @@ async function createScene() {
       layoutScene(true);
     });
     setMode("rotate");
+    updateCameraModeSetting();
+    document.addEventListener("keydown", (event) => {
+      if (event.code !== "Space" || event.repeat || familyView.hidden || cameraModeSelector.checked ||
+          event.target instanceof Element && event.target.closest("button, input, select, textarea, [contenteditable='true']")) return;
+      spacePressed = true;
+      controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+      event.preventDefault();
+    });
+    document.addEventListener("keyup", (event) => {
+      if (event.code !== "Space" || !spacePressed) return;
+      spacePressed = false;
+      setMode(mode);
+    });
+    window.addEventListener("blur", () => {
+      if (!spacePressed) return;
+      spacePressed = false;
+      setMode(mode);
+    });
     controls.addEventListener("start", () => { pendingInitialFit = false; });
     controls.addEventListener("change", drawScene);
     ambientLight = new THREE.HemisphereLight(0xffffff, 0x536078, 1.4);

@@ -35,6 +35,7 @@ menu.addEventListener("keydown", (event) => {
 
 const themePreferenceKey = "3dfamily.visualTheme";
 const appearancePreferenceKey = "3dfamily.appearance";
+const cameraModePreferenceKey = "3dfamily.cameraModeSelector";
 const systemAppearance = window.matchMedia?.("(prefers-color-scheme: dark)");
 const readPreference = (key, fallback, allowed) => {
   try {
@@ -54,6 +55,7 @@ const savePreference = (key, value) => {
 let appearanceMode = readPreference(appearancePreferenceKey, "light", ["light", "dark", "system"]);
 visualThemeSelect.value = readPreference(themePreferenceKey, "standard", ["standard", "space", "heritage"]);
 appearanceSelect.value = appearanceMode;
+cameraModeSelector.checked = readPreference(cameraModePreferenceKey, "true", ["true", "false"]) === "true";
 
 function applyVisualSettings() {
   const root = document.documentElement;
@@ -73,6 +75,9 @@ appearanceSelect.addEventListener("change", () => {
   appearanceMode = appearanceSelect.value;
   savePreference(appearancePreferenceKey, appearanceMode);
   applyVisualSettings();
+});
+cameraModeSelector.addEventListener("change", () => {
+  savePreference(cameraModePreferenceKey, String(cameraModeSelector.checked));
 });
 systemAppearance?.addEventListener?.("change", () => {
   if (appearanceMode === "system") applyVisualSettings();
