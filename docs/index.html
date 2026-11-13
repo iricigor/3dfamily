@@ -122,6 +122,26 @@
       transform-style: preserve-3d;
     }
 
+    .connector {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--length);
+      height: 3px;
+      border-radius: 2px;
+      background: #8493ad;
+      transform: translate3d(var(--x), var(--y), var(--z))
+        rotateY(var(--angle-y)) rotateZ(var(--angle-z)) rotateX(var(--roll));
+      transform-origin: 0 50%;
+      --roll: 90deg;
+    }
+
+    .connector.spouse {
+      --roll: 0deg;
+      height: 4px;
+      background: repeating-linear-gradient(to right, #d68a36 0 8px, transparent 8px 14px);
+    }
+
     .person strong {
       line-height: 1.25;
       overflow-wrap: anywhere;
@@ -307,6 +327,23 @@
       scene.append(card);
     }
 
+    function addConnector(start, end, role) {
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const dz = end.z - start.z;
+      const horizontalLength = Math.hypot(dx, dz);
+      const connector = document.createElement("div");
+      connector.className = `connector ${role}`;
+      connector.setAttribute("aria-hidden", "true");
+      connector.style.setProperty("--x", `${start.x}px`);
+      connector.style.setProperty("--y", `${start.y}px`);
+      connector.style.setProperty("--z", `${start.z}px`);
+      connector.style.setProperty("--length", `${Math.hypot(horizontalLength, dy)}px`);
+      connector.style.setProperty("--angle-y", `${Math.atan2(-dz, dx)}rad`);
+      connector.style.setProperty("--angle-z", `${Math.atan2(dy, horizontalLength)}rad`);
+      scene.append(connector);
+    }
+
     function spreadInRow(people, role, y, z, gap) {
       people.forEach((person, index) => {
         const x = (index - (people.length - 1) / 2) * gap;
@@ -327,6 +364,17 @@
       );
       scene.replaceChildren();
       scene.style.width = `${groupExtent}px`;
+      relatives.parents.forEach((_, index) => {
+        const x = (index - (relatives.parents.length - 1) / 2) * 190;
+        addConnector({ x: 0, y: 0, z: 0 }, { x, y: -150, z: -190 }, "parent");
+      });
+      relatives.children.forEach((_, index) => {
+        const x = (index - (relatives.children.length - 1) / 2) * 205;
+        addConnector({ x: 0, y: 0, z: 0 }, { x, y: 150, z: 190 }, "child");
+      });
+      relatives.spouses.forEach((person, index) => {
+        addConnector({ x: 0, y: 0, z: 0 }, { x: -250 - index * 180, y: 0, z: 0 }, "spouse");
+      });
       spreadInRow(relatives.parents, "parent", -150, -190, 190);
       addPerson(center, "center", 0, 0, 0);
       spreadInRow(relatives.children, "child", 150, 190, 205);
