@@ -125,7 +125,9 @@
         inset 0 -4px 6px rgba(0, 0, 0, 0.08),
         inset 0 4px 6px rgba(255, 255, 255, 0.6);
       color: #172033;
+      font: inherit;
       text-align: center;
+      cursor: pointer;
       transform: translate3d(var(--x), var(--y), var(--z)) translate(-50%, -50%);
       transform-style: preserve-3d;
     }
@@ -243,6 +245,7 @@
     const status = document.querySelector("#status");
     const familyView = document.querySelector("#family-view");
     const scene = document.querySelector("#scene");
+    let familyData = null;
 
     function parseGedcom(text) {
       const individuals = new Map();
@@ -323,8 +326,10 @@
     }
 
     function addPerson(person, role, x, y, z) {
-      const card = document.createElement("article");
+      const card = document.createElement("button");
+      card.type = "button";
       card.className = `person ${role}`;
+      card.dataset.personId = person.id;
       card.style.setProperty("--x", `${x}px`);
       card.style.setProperty("--y", `${y}px`);
       card.style.setProperty("--z", `${z}px`);
@@ -361,8 +366,10 @@
       });
     }
 
-    function renderFamily({ individuals, families }) {
-      const center = individuals.values().next().value;
+    function renderFamily({ individuals, families }, centerId) {
+      const center = centerId === undefined
+        ? individuals.values().next().value
+        : individuals.get(centerId);
       if (!center) throw new Error("No people were found. Choose a GEDCOM file containing INDI records.");
 
       const relatives = relativesOf(center, individuals, families);
@@ -398,15 +405,24 @@
       familyView.hidden = false;
     }
 
+    scene.addEventListener("click", (event) => {
+      const card = event.target.closest(".person");
+      if (!familyData || !card || !scene.contains(card)) return;
+      renderFamily(familyData, card.dataset.personId);
+    });
+
     fileInput.addEventListener("change", async () => {
       familyView.hidden = true;
       scene.replaceChildren();
+      familyData = null;
       delete status.dataset.error;
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
 
       try {
-        renderFamily(parseGedcom(await file.text()));
+        const data = parseGedcom(await file.text());
+        renderFamily(data);
+        familyData = data;
       } catch (error) {
         status.dataset.error = "true";
         status.textContent = error instanceof Error ? error.message : "The GEDCOM file could not be read.";
