@@ -592,6 +592,7 @@
       margin: 8px 0;
       color: var(--muted);
       font-size: .88rem;
+      overflow-wrap: anywhere;
     }
     .filename-details strong { color: var(--text); }
     .color-setting {
@@ -613,6 +614,12 @@
     }
     .color-legend {
       margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.45;
+    }
+    .relationship-legend {
+      margin: 8px 0;
       color: var(--muted);
       font-size: .84rem;
       line-height: 1.45;
@@ -797,6 +804,7 @@
               <option value="sex">Recorded GEDCOM sex (SEX)</option>
             </select>
           </label>
+          <p class="relationship-legend">Card labels show each person’s relationship. Blue-gray connectors link parents and children; warm connectors mark spouse pairs.</p>
           <p id="color-legend" class="color-legend" hidden>M: blue; F: rose. Missing, unknown, and other values use neutral cards. This represents the recorded GEDCOM SEX field.</p>
           <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
           <p id="explorer-help" hidden>Drag in Pan or Rotate mode. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it. Labels show each person’s relationship to the centered person.</p>
