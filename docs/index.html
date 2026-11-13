@@ -84,7 +84,6 @@
 
     .theme-toggle {
       min-height: 44px;
-      margin-left: auto;
       padding: 8px 12px;
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -92,6 +91,21 @@
       color: var(--text);
       font: inherit;
       cursor: pointer;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .name-setting {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      white-space: nowrap;
     }
 
     .theme-toggle:focus-visible {
@@ -244,6 +258,17 @@
       }
 
     }
+
+    @media (max-width: 480px) {
+      header {
+        flex-wrap: wrap;
+      }
+
+      .header-controls {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
   </style>
 </head>
 <body>
@@ -251,7 +276,10 @@
     <header>
       <img class="tree-icon" src="tree-icon.svg" width="48" height="48" alt="">
       <h1>3D Family</h1>
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+      <div class="header-controls">
+        <label class="name-setting"><input id="simplify-names" type="checkbox" checked> Simplify surnames</label>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+      </div>
     </header>
     <p class="intro">Upload a GEDCOM family tree to see the first person in the file and their close family.</p>
     <section class="upload" aria-label="Upload family tree">
@@ -295,6 +323,7 @@
     const scene = document.querySelector("#scene");
     const peopleList = document.querySelector("#people");
     const themeToggle = document.querySelector("#theme-toggle");
+    const simplifyNames = document.querySelector("#simplify-names");
     let familyData = null;
     let centerPersonId;
     let THREE, renderer, world, camera, controls, members;
@@ -310,6 +339,10 @@
       if (familyData) renderFamily(familyData, centerPersonId);
     });
 
+    simplifyNames.addEventListener("change", () => {
+      if (familyData) renderFamily(familyData, centerPersonId);
+    });
+
     function parseGedcom(text) {
       const individuals = new Map();
       const families = new Map();
@@ -322,7 +355,7 @@
           const record = line.match(/^0\s+(@[^@]+@)\s+(INDI|FAM)\b/);
           if (!record) continue;
           current = record[2] === "INDI"
-            ? { type: "INDI", id: record[1], name: "", sex: "", famc: [], fams: [] }
+            ? { type: "INDI", id: record[1], name: "", lastName: "", sex: "", famc: [], fams: [] }
             : { type: "FAM", id: record[1], husband: "", wife: "", children: [] };
           (current.type === "INDI" ? individuals : families).set(current.id, current);
           continue;
@@ -335,7 +368,10 @@
         const [, tag, value = ""] = field;
 
         if (current.type === "INDI") {
-          if (tag === "NAME") current.name = value.replaceAll("/", "").replace(/\s+/g, " ").trim();
+          if (tag === "NAME") {
+            current.name = value.replaceAll("/", "").replace(/\s+/g, " ").trim();
+            current.lastName = value.match(/\/([^/]*)\//)?.[1].trim() || "";
+          }
           if (tag === "SEX") current.sex = value.trim();
           if (tag === "FAMC") current.famc.push(value.trim());
           if (tag === "FAMS") current.fams.push(value.trim());
@@ -461,7 +497,7 @@
       tiles = [];
     }
 
-    function tileTexture(person, role, colors) {
+    function tileTexture(name, role, colors) {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 320;
@@ -473,7 +509,6 @@
       context.strokeRect(6, 6, 500, 308);
       context.fillStyle = colors.getPropertyValue("--text").trim();
       context.textAlign = "center";
-      const name = person.name || `Unknown person (${person.id})`;
       let size = 40;
       let lines;
       do {
@@ -497,14 +532,22 @@
       return texture;
     }
 
-    function addPerson(person, role, x, z, colors) {
+    function personDisplayName(person, center) {
+      const name = person.name || `Unknown person (${person.id})`;
+      if (!simplifyNames.checked || person.id === center.id || !person.lastName ||
+          person.lastName.toLocaleLowerCase() !== center.lastName?.toLocaleLowerCase()) return name;
+      return name.split(/\s+/)[0] || name;
+    }
+
+    function addPerson(person, role, x, z, colors, center) {
+      const displayName = personDisplayName(person, center);
       const card = document.createElement("button");
       card.type = "button";
       card.className = `person ${role}`;
       card.dataset.personId = person.id;
 
       const name = document.createElement("strong");
-      name.textContent = person.name || `Unknown person (${person.id})`;
+      name.textContent = displayName;
       const label = document.createElement("small");
       label.textContent = role === "center" ? "Center person" : role;
       card.append(name, label);
@@ -512,7 +555,7 @@
 
       const height = role === "center" ? 2.1 : 1.9;
       const width = role === "center" ? 3.36 : 3.04;
-      const texture = tileTexture(person, role, colors);
+      const texture = tileTexture(displayName, role, colors);
       const tile = new THREE.Mesh(
         new THREE.PlaneGeometry(width, height),
         new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
@@ -613,11 +656,11 @@
       const colors = getComputedStyle(document.documentElement);
       world.background = new THREE.Color(colors.getPropertyValue("--page-bg").trim());
       const row = (people, role, z) => people.forEach((person, index) =>
-        addPerson(person, role, (index - (people.length - 1) / 2) * 3.8, z, colors));
+        addPerson(person, role, (index - (people.length - 1) / 2) * 3.8, z, colors, center));
       row(relatives.parents, "parent", -5);
-      addPerson(center, "center", 0, 0, colors);
-      relatives.spouses.forEach((person, index) => addPerson(person, "spouse", -4 - index * 3.8, 0, colors));
-      relatives.siblings.forEach((person, index) => addPerson(person, "sibling", 4 + index * 3.8, 0, colors));
+      addPerson(center, "center", 0, 0, colors, center);
+      relatives.spouses.forEach((person, index) => addPerson(person, "spouse", -4 - index * 3.8, 0, colors, center));
+      relatives.siblings.forEach((person, index) => addPerson(person, "sibling", 4 + index * 3.8, 0, colors, center));
       row(relatives.children, "child", 5);
       const floorWidth = Math.max(18, ...tiles.map((tile) => Math.abs(tile.position.x) * 2 + 8));
       const floor = new THREE.Mesh(
