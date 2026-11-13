@@ -452,6 +452,8 @@ function renderFamily({ individuals, families }, centerId) {
 
   const count = positions.size - 1;
   memberCount.textContent = `${count} family member${count === 1 ? "" : "s"} shown`;
+  memberCount.hidden = false;
+  document.querySelector(".relatives").hidden = false;
   status.dataset.error = "false";
   status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} family member${count === 1 ? "" : "s"} shown.`;
   familyView.hidden = false;

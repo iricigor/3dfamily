@@ -204,11 +204,7 @@ function layoutScene(fit = false) {
     const right = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
     const up = new THREE.Vector3().crossVectors(direction, right).normalize();
     const tanVertical = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const picker = document.querySelector(".picker-panel").getBoundingClientRect();
-    const toolbar = document.querySelector(".toolbar").getBoundingClientRect();
-    const topInset = Math.max(0, picker.bottom) + 16;
-    const bottomInset = Math.max(0, height - toolbar.top) + 16;
-    const heightRatio = Math.max(0.4, (height - topInset - bottomInset) / height);
+    const heightRatio = Math.max(0.4, (height - 64) / height);
     const widthRatio = Math.max(0.6, (width - 32) / width);
     let distance = 8;
     for (const x of [bounds.min.x, bounds.max.x]) {
@@ -222,9 +218,6 @@ function layoutScene(fit = false) {
         }
       }
     }
-    target.add(up.multiplyScalar(
-      distance * tanVertical * (topInset - bottomInset) / height
-    ));
     controls.target.copy(target);
     camera.position.copy(target).add(direction.multiplyScalar(distance));
     camera.far = Math.max(1000, distance * 5);
