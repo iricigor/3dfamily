@@ -25,23 +25,28 @@
     main {
       width: min(100% - 32px, 1200px);
       margin: 0 auto;
-      padding: 36px 0 48px;
+      padding: 20px 0 32px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(2rem, 5vw, 3rem);
+      font-size: clamp(1.7rem, 4vw, 2.2rem);
     }
 
     .tree-icon {
       display: block;
-      width: 256px;
-      height: 256px;
-      margin: 0 auto 20px;
+      width: 48px;
+      height: 48px;
     }
 
     .intro {
-      margin: 8px 0 24px;
+      margin: 8px 0 12px;
       color: #536078;
     }
 
@@ -50,7 +55,7 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 12px;
-      padding: 18px;
+      padding: 10px 12px;
       border: 1px solid #d5deeb;
       border-radius: 12px;
       background: #fff;
@@ -58,12 +63,13 @@
 
     input[type="file"] {
       max-width: 100%;
+      min-height: 44px;
       font: inherit;
     }
 
     .status {
       min-height: 1.5em;
-      margin: 12px 0 0;
+      margin: 8px 0 0;
       color: #536078;
     }
 
@@ -75,9 +81,9 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px 24px;
-      margin: 22px 0 4px;
-      color: #536078;
+      gap: 6px 16px;
+      margin: 12px 0 4px;
+      color: #43516a;
       font-size: 0.9rem;
     }
 
@@ -93,24 +99,58 @@
 
     .stage {
       overflow: auto hidden;
-      min-height: 560px;
-      padding: 12px 0 20px;
-      perspective: 1000px;
-      perspective-origin: 50% 45%;
+      padding: 0 0 12px;
+    }
+
+    .stage:focus-visible {
+      outline: 3px solid #172e78;
+      outline-offset: 2px;
     }
 
     .scene {
       position: relative;
-      height: 530px;
       min-width: 100%;
       margin: 0 auto;
-      transform-style: preserve-3d;
+      isolation: isolate;
+    }
+
+    .ground {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .ground polygon {
+      fill: #e5ede9;
+      stroke: #cbd9d3;
+      stroke-width: 1;
+    }
+
+    .connector {
+      fill: none;
+      stroke: #657892;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .connector.spouse {
+      stroke: #a45b0e;
+      stroke-width: 3;
+      stroke-dasharray: 8 6;
+    }
+
+    .group {
+      display: contents;
+    }
+
+    .group h2 {
+      display: none;
     }
 
     .person {
       position: absolute;
-      top: 50%;
-      left: 50%;
       display: grid;
       width: 174px;
       min-height: 104px;
@@ -118,38 +158,35 @@
       justify-items: center;
       padding: 14px;
       border: 1px solid #d5deeb;
-      border-radius: 1.5rem;
+      border-radius: 0.7rem;
       background: #fff;
       box-shadow:
-        0 20px 40px -15px rgba(0, 0, 0, 0.1),
-        inset 0 -4px 6px rgba(0, 0, 0, 0.08),
-        inset 0 4px 6px rgba(255, 255, 255, 0.6);
+        3px 4px 0 #c6d1d1,
+        0 9px 10px -8px rgba(31, 53, 51, 0.65);
       color: #172033;
       font: inherit;
       text-align: center;
       cursor: pointer;
-      transform: translate3d(var(--x), var(--y), var(--z)) translate(-50%, -50%);
-      transform-style: preserve-3d;
+      transform: translate(-50%, -100%) scale(var(--scale));
+      transform-origin: center bottom;
     }
 
-    .connector {
+    .person::after {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: var(--length);
-      height: 3px;
-      border-radius: 2px;
-      background: #8493ad;
-      transform: translate3d(var(--x), var(--y), var(--z))
-        rotateY(var(--angle-y)) rotateZ(var(--angle-z)) rotateX(var(--roll));
-      transform-origin: 0 50%;
-      --roll: 90deg;
+      z-index: -1;
+      right: -5%;
+      bottom: -11px;
+      left: -5%;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(37, 58, 55, 0.2);
+      filter: blur(4px);
+      content: "";
     }
 
-    .connector.spouse {
-      --roll: 0deg;
-      height: 4px;
-      background: repeating-linear-gradient(to right, #d68a36 0 8px, transparent 8px 14px);
+    .person:focus-visible {
+      outline: 3px solid #172e78;
+      outline-offset: 4px;
     }
 
     .person strong {
@@ -159,20 +196,18 @@
 
     .person small {
       margin-top: 6px;
-      color: #64728a;
+      color: #46556d;
       font-size: 0.78rem;
     }
 
     .person.center {
-      z-index: 1;
-      width: 220px;
-      min-height: 126px;
+      width: 196px;
+      min-height: 112px;
       border: 2px solid #334f9d;
       background: #e9efff;
       box-shadow:
-        0 24px 44px -12px rgba(30, 45, 70, 0.24),
-        inset 0 -4px 6px rgba(30, 45, 70, 0.1),
-        inset 0 4px 6px rgba(255, 255, 255, 0.75),
+        3px 4px 0 #aab8d5,
+        0 9px 10px -8px rgba(31, 53, 51, 0.65),
         inset 0 0 0 2px #849be0;
     }
 
@@ -181,9 +216,14 @@
     }
 
     .person.child {
-      width: 188px;
-      min-height: 112px;
       background: #e8f7f1;
+    }
+
+    .person.child::after {
+      right: -12%;
+      left: -12%;
+      height: 16px;
+      filter: blur(5px);
     }
 
     .person.spouse {
@@ -198,26 +238,62 @@
       display: none !important;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 700px) {
       main {
         width: min(100% - 20px, 1200px);
-        padding-top: 24px;
+        padding-top: 16px;
       }
 
       .stage {
-        min-height: 500px;
+        overflow: visible;
       }
 
       .scene {
-        height: 480px;
+        display: grid;
+        gap: 14px;
+        width: 100% !important;
+        height: auto !important;
+      }
+
+      .ground {
+        display: none;
+      }
+
+      .group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+        gap: 8px;
+      }
+
+      .group h2 {
+        display: block;
+        grid-column: 1 / -1;
+        margin: 0;
+        color: #43516a;
+        font-size: 0.9rem;
+      }
+
+      .person, .person.center {
+        position: relative;
+        top: auto !important;
+        left: auto !important;
+        width: 100%;
+        min-height: 88px;
+        transform: none;
+      }
+
+      .person::after {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
   <main>
-    <img class="tree-icon" src="tree-icon.svg" width="256" height="256" alt="Colorful family tree illustration">
-    <h1>3D Family</h1>
+    <header>
+      <img class="tree-icon" src="tree-icon.svg" width="48" height="48" alt="">
+      <h1>3D Family</h1>
+    </header>
     <p class="intro">Upload a GEDCOM family tree to see the first person in the file and their close family.</p>
     <section class="upload" aria-label="Upload family tree">
       <label for="gedcom-file">Choose a GEDCOM file (.ged)</label>
@@ -225,7 +301,6 @@
     </section>
     <p id="status" class="status" role="status" aria-live="polite">Your file is read in this page and is not uploaded to a server.</p>
     <div id="family-view" hidden>
-      <img class="tree-icon" src="tree-icon.svg" width="256" height="256" alt="Colorful family tree illustration">
       <div class="key" aria-label="Family member positions">
         <span style="--swatch:#d9d3ff">Parents behind</span>
         <span style="--swatch:#b7d4ff">Center</span>
@@ -233,7 +308,7 @@
         <span style="--swatch:#ffdfb8">Spouses left</span>
         <span style="--swatch:#ffd2d8">Siblings right</span>
       </div>
-      <div class="stage" aria-label="Static three-dimensional family view">
+      <div class="stage" tabindex="0" role="region" aria-label="Family view; scroll horizontally for more people">
         <div id="scene" class="scene"></div>
       </div>
     </div>
@@ -325,44 +400,88 @@
       };
     }
 
-    function addPerson(person, role, x, y, z) {
+    function addPerson(person, role, group) {
       const card = document.createElement("button");
       card.type = "button";
       card.className = `person ${role}`;
       card.dataset.personId = person.id;
-      card.style.setProperty("--x", `${x}px`);
-      card.style.setProperty("--y", `${y}px`);
-      card.style.setProperty("--z", `${z}px`);
 
       const name = document.createElement("strong");
       name.textContent = person.name || `Unknown person (${person.id})`;
       const label = document.createElement("small");
       label.textContent = role === "center" ? "Center person" : role;
       card.append(name, label);
-      scene.append(card);
+      group.append(card);
     }
 
-    function addConnector(start, end, role) {
-      const dx = end.x - start.x;
-      const dy = end.y - start.y;
-      const dz = end.z - start.z;
-      const horizontalLength = Math.hypot(dx, dz);
-      const connector = document.createElement("div");
-      connector.className = `connector ${role}`;
-      connector.setAttribute("aria-hidden", "true");
-      connector.style.setProperty("--x", `${start.x}px`);
-      connector.style.setProperty("--y", `${start.y}px`);
-      connector.style.setProperty("--z", `${start.z}px`);
-      connector.style.setProperty("--length", `${Math.hypot(horizontalLength, dy)}px`);
-      connector.style.setProperty("--angle-y", `${Math.atan2(-dz, dx)}rad`);
-      connector.style.setProperty("--angle-z", `${Math.atan2(dy, horizontalLength)}rad`);
-      scene.append(connector);
+    function addGroup(people, role, title) {
+      if (!people.length) return;
+      const group = document.createElement("section");
+      group.className = "group";
+      group.setAttribute("aria-label", title);
+      const heading = document.createElement("h2");
+      heading.textContent = title;
+      group.append(heading);
+      people.forEach((person) => addPerson(person, role, group));
+      scene.append(group);
     }
 
-    function spreadInRow(people, role, y, z, gap) {
-      people.forEach((person, index) => {
-        const x = (index - (people.length - 1) / 2) * gap;
-        addPerson(person, role, x, y, z);
+    function layoutScene() {
+      if (familyView.hidden || window.matchMedia("(max-width: 700px)").matches) return;
+
+      const cards = (role) => [...scene.querySelectorAll(`.person.${role}`)];
+      const parents = cards("parent");
+      const spouses = cards("spouse");
+      const center = cards("center")[0];
+      const siblings = cards("sibling");
+      const children = cards("child");
+      if (!center) return;
+
+      const width = Math.max(
+        scene.parentElement.clientWidth, 600,
+        parents.length * 190 + 40,
+        children.length * 205 + 40,
+        2 * (220 + Math.max(spouses.length - 1, siblings.length - 1, 0) * 190 + 110)
+      );
+      scene.style.width = `${width}px`;
+
+      const heightOf = (items, scale) => Math.max(0, ...items.map((card) => card.offsetHeight * scale));
+      const parentY = 20 + heightOf(parents, 0.9);
+      const middleY = parentY + (parents.length ? 40 : 0) + heightOf([center, ...spouses, ...siblings], 1);
+      const childY = middleY + (children.length ? 40 + heightOf(children, 1.05) : 0);
+      const height = childY + 36;
+      scene.style.height = `${height}px`;
+
+      const ground = scene.querySelector(".ground");
+      ground.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      ground.replaceChildren();
+      const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      const groundTop = (parents.length ? parentY : middleY) - 8;
+      polygon.setAttribute("points", `20,${groundTop} ${width - 20},${groundTop} ${width},${height} 0,${height}`);
+      ground.append(polygon);
+
+      const positions = [];
+      const place = (card, x, y, scale, role) => {
+        card.style.left = `${x}px`;
+        card.style.top = `${y}px`;
+        card.style.setProperty("--scale", scale);
+        positions.push({ x, y, role });
+      };
+      const middleX = width / 2;
+      parents.forEach((card, index) => place(card, middleX + (index - (parents.length - 1) / 2) * 190, parentY, 0.9, "parent"));
+      place(center, middleX, middleY, 1, "center");
+      spouses.forEach((card, index) => place(card, middleX - 220 - index * 190, middleY, 1, "spouse"));
+      siblings.forEach((card, index) => place(card, middleX + 220 + index * 190, middleY, 1, "sibling"));
+      children.forEach((card, index) => place(card, middleX + (index - (children.length - 1) / 2) * 205, childY, 1.05, "child"));
+
+      positions.filter((position) => position.role !== "center").forEach((position) => {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("class", `connector ${position.role}`);
+        line.setAttribute("x1", middleX);
+        line.setAttribute("y1", middleY);
+        line.setAttribute("x2", position.x);
+        line.setAttribute("y2", position.y);
+        ground.append(line);
       });
     }
 
@@ -373,43 +492,35 @@
       if (!center) throw new Error("No people were found. Choose a GEDCOM file containing INDI records.");
 
       const relatives = relativesOf(center, individuals, families);
-      const groupExtent = Math.max(
-        460,
-        relatives.parents.length * 190,
-        relatives.children.length * 205,
-        680 + Math.max(0, Math.max(relatives.spouses.length, relatives.siblings.length) - 1) * 360
-      );
       scene.replaceChildren();
-      scene.style.width = `${groupExtent}px`;
-      relatives.parents.forEach((_, index) => {
-        const x = (index - (relatives.parents.length - 1) / 2) * 190;
-        addConnector({ x: 0, y: 0, z: 0 }, { x, y: -150, z: -190 }, "parent");
-      });
-      relatives.children.forEach((_, index) => {
-        const x = (index - (relatives.children.length - 1) / 2) * 205;
-        addConnector({ x: 0, y: 0, z: 0 }, { x, y: 150, z: 190 }, "child");
-      });
-      relatives.spouses.forEach((person, index) => {
-        addConnector({ x: 0, y: 0, z: 0 }, { x: -250 - index * 180, y: 0, z: 0 }, "spouse");
-      });
-      spreadInRow(relatives.parents, "parent", -150, -190, 190);
-      addPerson(center, "center", 0, 0, 0);
-      spreadInRow(relatives.children, "child", 150, 190, 205);
-      relatives.spouses.forEach((person, index) => addPerson(person, "spouse", -250 - index * 180, 0, 0));
-      relatives.siblings.forEach((person, index) => addPerson(person, "sibling", 250 + index * 180, 0, 0));
+      const ground = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      ground.classList.add("ground");
+      ground.setAttribute("aria-hidden", "true");
+      scene.append(ground);
+      addGroup(relatives.parents, "parent", "Parents");
+      addGroup(relatives.spouses, "spouse", "Spouses");
+      addGroup([center], "center", "Center person");
+      addGroup(relatives.siblings, "sibling", "Siblings");
+      addGroup(relatives.children, "child", "Children");
 
       const count = relatives.parents.length + relatives.children.length +
         relatives.spouses.length + relatives.siblings.length;
       status.dataset.error = "false";
       status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} close family member${count === 1 ? "" : "s"} shown.`;
       familyView.hidden = false;
+      layoutScene();
+      const stage = scene.parentElement;
+      stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2;
     }
 
     scene.addEventListener("click", (event) => {
       const card = event.target.closest(".person");
       if (!familyData || !card || !scene.contains(card)) return;
       renderFamily(familyData, card.dataset.personId);
+      scene.querySelector(".person.center").focus();
     });
+
+    window.addEventListener("resize", layoutScene);
 
     fileInput.addEventListener("change", async () => {
       familyView.hidden = true;
