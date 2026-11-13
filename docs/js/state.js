@@ -25,6 +25,8 @@ let familyData = null;
 let centerPersonId;
 let THREE, renderer, world, camera, controls, members;
 let tiles = [];
+let personCards = new Map();
+let hoveredPersonId = null;
 let connectorPoints = [];
 let sceneReady;
 let sceneResizeObserver;

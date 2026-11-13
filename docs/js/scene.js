@@ -96,6 +96,23 @@ async function createScene() {
 
     let pointerStart;
     const activePointers = new Set();
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const updateHoveredPerson = (event) => {
+      if (event.pointerType === "touch" || pointerStart?.dragged) {
+        setHoveredPerson(null);
+        return;
+      }
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      pointer.set(
+        (event.clientX - rect.left) / rect.width * 2 - 1,
+        -(event.clientY - rect.top) / rect.height * 2 + 1
+      );
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects(tiles, false)[0];
+      setHoveredPerson(hit?.object.userData.personId ?? null);
+    };
     renderer.domElement.addEventListener("pointerdown", (event) => {
       activePointers.add(event.pointerId);
       if (activePointers.size > 1 && pointerStart) pointerStart.dragged = true;
@@ -108,7 +125,9 @@ async function createScene() {
           Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 5) {
         pointerStart.dragged = true;
       }
+      updateHoveredPerson(event);
     });
+    renderer.domElement.addEventListener("pointerleave", () => setHoveredPerson(null));
     renderer.domElement.addEventListener("pointercancel", (event) => {
       activePointers.delete(event.pointerId);
       pointerStart = null;
@@ -121,11 +140,11 @@ async function createScene() {
       if (!familyData || !event.isPrimary || event.button !== 0 || start.dragged ||
           Math.hypot(event.clientX - start.x, event.clientY - start.y) > 5) return;
       const rect = renderer.domElement.getBoundingClientRect();
-      const pointer = new THREE.Vector2(
+      if (!rect.width || !rect.height) return;
+      pointer.set(
         (event.clientX - rect.left) / rect.width * 2 - 1,
         -(event.clientY - rect.top) / rect.height * 2 + 1
       );
-      const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(pointer, camera);
       const hit = raycaster.intersectObjects(tiles, false)[0];
       if (hit) renderFamily(familyData, hit.object.userData.personId);
@@ -165,6 +184,8 @@ function clearScene() {
   });
   members.clear();
   tiles = [];
+  personCards.clear();
+  hoveredPersonId = null;
   connectorPoints = [];
 }
 
