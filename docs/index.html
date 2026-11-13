@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>3D Family</title>
+  <link rel="icon" type="image/svg+xml" href="tree-icon.svg">
   <style>
     :root {
       color-scheme: light;
@@ -30,6 +31,13 @@
     h1 {
       margin: 0;
       font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .tree-icon {
+      display: block;
+      width: 256px;
+      height: 256px;
+      margin: 0 auto 20px;
     }
 
     .intro {
@@ -206,6 +214,7 @@
 </head>
 <body>
   <main>
+    <img class="tree-icon" src="tree-icon.svg" width="256" height="256" alt="Colorful family tree illustration">
     <h1>3D Family</h1>
     <p class="intro">Upload a GEDCOM family tree to see the first person in the file and their close family.</p>
     <section class="upload" aria-label="Upload family tree">
@@ -214,6 +223,7 @@
     </section>
     <p id="status" class="status" role="status" aria-live="polite">Your file is read in this page and is not uploaded to a server.</p>
     <div id="family-view" hidden>
+      <img class="tree-icon" src="tree-icon.svg" width="256" height="256" alt="Colorful family tree illustration">
       <div class="key" aria-label="Family member positions">
         <span style="--swatch:#d9d3ff">Parents behind</span>
         <span style="--swatch:#b7d4ff">Center</span>
