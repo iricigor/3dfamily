@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>3D Family</title>
   <link rel="icon" type="image/svg+xml" href="tree-icon.svg">
   <style>
@@ -544,20 +544,270 @@
       .toolbar select { width: 10rem; flex: 1; }
       .status { font-size: .85rem; }
     }
+
+    main.exploring {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .exploring header {
+      position: absolute;
+      inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) auto max(12px, env(safe-area-inset-left));
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .exploring header > * { pointer-events: auto; }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .exploring h1 { font-size: 1.1rem; letter-spacing: -.025em; }
+    .exploring .tree-icon { width: 28px; height: 28px; }
+    .exploring .header-controls { margin-left: auto; }
+    .exploring #welcome { display: none; }
+    .exploring .theme-toggle { min-width: 44px; min-height: 44px; }
+    .exploring .menu {
+      top: calc(100% + 8px);
+      right: 0;
+      max-height: calc(100dvh - 80px);
+      overflow: auto;
+      z-index: 4;
+    }
+    .menu-action {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .filename-details {
+      margin: 8px 0;
+      color: var(--muted);
+      font-size: .88rem;
+      overflow-wrap: anywhere;
+    }
+    .filename-details strong { color: var(--text); }
+    .color-setting {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .color-setting select {
+      min-height: 40px;
+      max-width: 62%;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      color: var(--text);
+      font: inherit;
+    }
+    .color-legend {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.45;
+    }
+    .relationship-legend {
+      margin: 8px 0;
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.45;
+    }
+    .exploring #family-view:not([hidden]) {
+      position: absolute;
+      inset: 0;
+      display: block;
+      min-height: 0;
+    }
+    .stage {
+      position: absolute;
+      inset: 0;
+      min-height: 0;
+    }
+    .scene { position: absolute; inset: 0; }
+    .explorer-ui {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .picker-panel {
+      position: absolute;
+      top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+      left: max(12px, env(safe-area-inset-left));
+      display: grid;
+      gap: 6px;
+      width: min(320px, calc(100vw - 24px));
+      padding: 10px;
+      border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, .08);
+      pointer-events: auto;
+    }
+    .picker-panel label { font-size: .82rem; font-weight: 650; }
+    #person-picker {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      color: var(--text);
+      font: inherit;
+    }
+    #member-count { color: var(--muted); font-size: .78rem; }
+    .relatives { position: relative; }
+    .relatives summary {
+      width: fit-content;
+      min-height: 36px;
+      padding: 7px 2px;
+      color: var(--muted);
+      font-size: .84rem;
+      cursor: pointer;
+    }
+    #people {
+      position: absolute;
+      top: 100%;
+      left: -10px;
+      width: min(420px, calc(100vw - 24px));
+      max-height: min(50dvh, 420px);
+      overflow: auto;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-bg);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+    }
+    .toolbar {
+      position: absolute;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      left: 50%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      width: max-content;
+      max-width: calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
+      padding: 8px;
+      border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, .08);
+      transform: translateX(-50%);
+      pointer-events: auto;
+    }
+    .toolbar-group {
+      display: inline-flex;
+      gap: 4px;
+      padding-right: 6px;
+      border-right: 1px solid var(--border);
+    }
+    .toolbar-group:last-child { padding-right: 0; border-right: 0; }
+    .toolbar button {
+      min-height: 40px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .toolbar-group button[aria-pressed="true"] { background: var(--center-bg); }
+    .person.parent, .person.child, .person.spouse, .person.sibling,
+    .person.grandparent, .person.grandchild {
+      background: var(--card-bg);
+      opacity: 1;
+    }
+    .person.sex-m { background: var(--sex-m-bg); }
+    .person.sex-f { background: var(--sex-f-bg); }
+    .person.center {
+      border: 2px solid var(--center-border);
+      box-shadow: 0 0 0 2px var(--center-bg);
+    }
+    .person[aria-current="true"] { border-color: var(--center-border); }
+    .exploring #status {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    :root {
+      --card-bg: #f5f6f7;
+      --sex-m-bg: #e4effa;
+      --sex-f-bg: #f8e9ed;
+    }
+    :root[data-theme="dark"] {
+      --card-bg: #363e49;
+      --sex-m-bg: #304558;
+      --sex-f-bg: #503b45;
+    }
+
+    @media (max-width: 600px) {
+      .exploring header {
+        inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) auto max(8px, env(safe-area-inset-left));
+      }
+      .picker-panel {
+        top: calc(max(8px, env(safe-area-inset-top)) + 54px);
+        left: max(8px, env(safe-area-inset-left));
+        width: min(270px, calc(100vw - 16px));
+        padding: 8px;
+      }
+      .toolbar {
+        bottom: max(8px, env(safe-area-inset-bottom));
+        gap: 4px;
+        padding: 6px;
+      }
+      .toolbar button { min-height: 44px; padding: 6px 8px; font-size: .84rem; }
+      .toolbar-group { padding-right: 4px; }
+      #people { width: min(340px, calc(100vw - 16px)); }
+    }
   </style>
 </head>
 <body>
+  <input id="gedcom-file" class="file-input" type="file" accept=".ged,.gedcom,text/plain">
   <main>
     <header>
-      <img class="tree-icon" src="tree-icon.svg" width="48" height="48" alt="">
-      <h1>3D Family</h1>
+      <div class="brand">
+        <img class="tree-icon" src="tree-icon.svg" width="48" height="48" alt="">
+        <h1>3D Family</h1>
+      </div>
       <div class="header-controls">
         <button id="menu-toggle" class="theme-toggle" type="button" aria-label="Options" aria-controls="menu" aria-expanded="false">☰</button>
         <div id="menu" class="menu" hidden>
+          <button id="change-file" class="menu-action" type="button">Change file</button>
+          <p class="filename-details">Current file: <strong id="filename">No file selected</strong></p>
           <label class="name-setting"><input id="show-second-relatives" type="checkbox" checked> Show 2nd relatives</label>
           <label class="name-setting"><input id="simplify-names" type="checkbox" checked> Simplify surnames</label>
+          <label class="color-setting" for="card-colors">Card colors
+            <select id="card-colors">
+              <option value="neutral">Neutral</option>
+              <option value="sex">Recorded GEDCOM sex (SEX)</option>
+            </select>
+          </label>
+          <p class="relationship-legend">Card labels show each person’s relationship. Blue-gray connectors link parents and children; warm connectors mark spouse pairs.</p>
+          <p id="color-legend" class="color-legend" hidden>M: blue; F: rose. Missing, unknown, and other values use neutral cards. This represents the recorded GEDCOM SEX field.</p>
           <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
-          <p id="explorer-help" hidden>Drag in Pan or Rotate mode. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it.</p>
+          <p id="explorer-help" hidden>Drag in Pan or Rotate mode. Use the wheel or pinch to zoom; right-drag to pan. Tap or click a card to select it. Labels show each person’s relationship to the centered person.</p>
         </div>
       </div>
     </header>
@@ -572,7 +822,6 @@
         </figure>
       </div>
       <section class="upload" aria-label="Open a family tree file">
-        <input id="gedcom-file" type="file" accept=".ged,.gedcom,text/plain">
         <label for="gedcom-file" id="upload-label" class="primary-button">Open family tree</label>
         <p class="drop-hint">or drop your .ged file here</p>
         <button id="try-example" class="theme-toggle" type="button">Try an example</button>
@@ -585,27 +834,28 @@
     </section>
     <p id="status" class="status" role="status" aria-live="polite"></p>
     <div id="family-view" hidden>
-      <div class="toolbar" aria-label="Family view controls">
-        <label for="person-search">Choose person</label>
-        <input id="person-search" type="search" placeholder="Search names" aria-label="Search people">
-        <select id="person-choice" aria-label="Choose person"></select>
-        <button id="pan-mode" type="button" aria-pressed="false">Pan</button>
-        <button id="rotate-mode" type="button" aria-pressed="true">Rotate</button>
-        <button id="fit-family" type="button">Fit family</button>
-        <button id="reset-view" type="button">Reset view</button>
+      <div class="explorer-ui">
+        <section class="picker-panel" aria-label="Family selection">
+          <label for="person-picker">Choose person</label>
+          <input id="person-picker" type="search" list="person-options" placeholder="Search family members" aria-label="Choose person" autocomplete="off">
+          <datalist id="person-options"></datalist>
+          <span id="member-count"></span>
+          <details class="relatives">
+            <summary>Family members and relationships</summary>
+            <div id="people"></div>
+          </details>
+        </section>
+        <div class="toolbar" aria-label="Camera controls">
+          <div class="toolbar-group" role="group" aria-label="Camera interaction">
+            <button id="pan-mode" type="button" aria-pressed="false">Pan</button>
+            <button id="rotate-mode" type="button" aria-pressed="true">Rotate</button>
+          </div>
+          <div class="toolbar-group" role="group" aria-label="Camera view">
+            <button id="fit-family" type="button">Fit family</button>
+            <button id="reset-view" type="button">Reset view</button>
+          </div>
+        </div>
       </div>
-      <div class="key" aria-label="Family member positions">
-        <span style="--swatch:#d9d3ff">Parents behind</span>
-        <span style="--swatch:#b7d4ff">Center</span>
-        <span style="--swatch:#bcebd7">Children in front</span>
-        <span style="--swatch:#ffdfb8">Spouses left</span>
-        <span style="--swatch:#ffd2d8">Siblings right</span>
-        <span style="--swatch:#dfe3eb">2nd relatives</span>
-      </div>
-      <details class="relatives">
-        <summary>Family members and relationships</summary>
-        <div id="people"></div>
-      </details>
       <div class="stage" tabindex="0" role="region" aria-label="3D family view">
         <div id="scene" class="scene"></div>
       </div>
@@ -632,10 +882,15 @@
     const themeToggle = document.querySelector("#theme-toggle");
     const simplifyNames = document.querySelector("#simplify-names");
     const showSecondRelatives = document.querySelector("#show-second-relatives");
+    const cardColors = document.querySelector("#card-colors");
+    const colorLegend = document.querySelector("#color-legend");
     const menuToggle = document.querySelector("#menu-toggle");
     const menu = document.querySelector("#menu");
-    const personSearch = document.querySelector("#person-search");
-    const personChoice = document.querySelector("#person-choice");
+    const personPicker = document.querySelector("#person-picker");
+    const personOptions = document.querySelector("#person-options");
+    const memberCount = document.querySelector("#member-count");
+    const pickerIds = new Map();
+    const main = document.querySelector("main");
     let familyData = null;
     let centerPersonId;
     let THREE, renderer, world, camera, controls, members;
@@ -651,7 +906,11 @@
       menuToggle.setAttribute("aria-expanded", String(open));
     }
 
-    menuToggle.addEventListener("click", () => setMenuOpen(menu.hidden));
+    menuToggle.addEventListener("click", () => {
+      const open = menu.hidden;
+      setMenuOpen(open);
+      if (open) menu.querySelector("button, input, select").focus();
+    });
     document.addEventListener("click", (event) => {
       if (!menu.hidden && !menu.contains(event.target) && !menuToggle.contains(event.target)) setMenuOpen(false);
     });
@@ -661,30 +920,48 @@
         menuToggle.focus();
       }
     });
+    menu.addEventListener("keydown", (event) => {
+      if (event.key !== "Tab") return;
+      const controls = [...menu.querySelectorAll("button, input, select")]
+        .filter((control) => !control.disabled && control.getClientRects().length);
+      const first = controls[0], last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
 
     function updatePersonChooser(individuals, selectedId) {
-      const query = personSearch.value.trim().toLocaleLowerCase();
-      personChoice.replaceChildren();
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Select a person";
-      personChoice.append(placeholder);
-      for (const person of individuals.values()) {
+      const people = [...individuals.values()];
+      const names = new Map();
+      for (const person of people) {
         const name = person.name || `Unknown person (${person.id})`;
-        if (!`${name} ${person.id}`.toLocaleLowerCase().includes(query)) continue;
-        const option = document.createElement("option");
-        option.value = person.id;
-        option.textContent = name;
-        personChoice.append(option);
+        names.set(name, (names.get(name) || 0) + 1);
       }
-      personChoice.value = [...personChoice.options].some((option) => option.value === selectedId) ? selectedId : "";
+      pickerIds.clear();
+      personOptions.replaceChildren();
+      for (const person of people) {
+        const name = person.name || `Unknown person (${person.id})`;
+        const label = names.get(name) > 1 ? `${name} (${person.id})` : name;
+        const option = document.createElement("option");
+        option.value = label;
+        personOptions.append(option);
+        pickerIds.set(label, person.id);
+      }
+      const selected = individuals.get(selectedId);
+      personPicker.value = selected
+        ? (names.get(selected.name || `Unknown person (${selected.id})`) > 1
+          ? `${selected.name || `Unknown person (${selected.id})`} (${selected.id})`
+          : selected.name || `Unknown person (${selected.id})`)
+        : "";
     }
 
-    personSearch.addEventListener("input", () => {
-      if (familyData) updatePersonChooser(familyData.individuals, centerPersonId);
-    });
-    personChoice.addEventListener("change", () => {
-      if (familyData && personChoice.value) renderFamily(familyData, personChoice.value);
+    personPicker.addEventListener("change", () => {
+      const id = pickerIds.get(personPicker.value);
+      if (familyData && id) renderFamily(familyData, id);
     });
 
     themeToggle.addEventListener("click", () => {
@@ -702,6 +979,13 @@
     showSecondRelatives.addEventListener("change", () => {
       if (familyData) renderFamily(familyData, centerPersonId);
     });
+
+    cardColors.addEventListener("change", () => {
+      colorLegend.hidden = cardColors.value !== "sex";
+      if (familyData) renderFamily(familyData, centerPersonId);
+    });
+
+    document.querySelector("#change-file").addEventListener("click", () => fileInput.click());
 
     function parseGedcom(text) {
       const individuals = new Map();
@@ -771,7 +1055,6 @@
       const spouses = new Set();
       const children = new Set();
       const grandparents = new Set();
-      const spouseParents = [];
       const grandchildren = new Set();
 
       for (const familyId of center.famc) {
@@ -813,17 +1096,6 @@
         }
       }
 
-      for (const spouse of people(spouses)) {
-        const spouseParentIds = new Set();
-        for (const familyId of spouse.famc) {
-          const family = families.get(familyId);
-          if (!family) continue;
-          if (family.husband) spouseParentIds.add(family.husband);
-          if (family.wife) spouseParentIds.add(family.wife);
-        }
-        spouseParents.push({ spouse, parents: addSecondDegree(spouseParentIds) });
-      }
-
       for (const child of people(children)) {
         for (const familyId of child.fams) {
           const family = families.get(familyId);
@@ -837,7 +1109,6 @@
         spouses: people(spouses),
         children: people(children),
         grandparents: addSecondDegree(grandparents),
-        spouseParents,
         grandchildren: addSecondDegree(grandchildren)
       };
     }
@@ -884,8 +1155,8 @@
         });
         document.querySelector("#reset-view")?.addEventListener("click", () => {
           pendingInitialFit = false;
-          const direction = new THREE.Vector3(0, 0.48, 0.88).normalize();
-          camera.position.copy(controls.target).add(direction);
+          camera.position.set(0, 8, 15);
+          controls.target.set(0, 0, 0);
           layoutScene(true);
         });
         setMode("rotate");
@@ -971,37 +1242,45 @@
       connectorPoints = [];
     }
 
-    function tileTexture(name, role, colors) {
+    function tileTexture(name, role, colors, person) {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 320;
       const context = canvas.getContext("2d");
-      context.fillStyle = colors.getPropertyValue(
-        ["grandparent", "spouse-parent", "grandchild"].includes(role) ? "--second-bg" : `--${role}-bg`
-      ).trim();
+      const sex = person.sex.trim().toUpperCase();
+      const fill = cardColors.value === "sex" && (sex === "M" || sex === "F")
+        ? sex === "M" ? "--sex-m-bg" : "--sex-f-bg"
+        : "--card-bg";
+      context.fillStyle = colors.getPropertyValue(fill).trim();
       context.fillRect(0, 0, 512, 320);
       context.fillStyle = colors.getPropertyValue("--text").trim();
       context.textAlign = "center";
       context.textBaseline = "middle";
+      const maxWidth = 420;
       let size = 46;
-      let lines;
-      do {
+      context.font = `600 ${size}px system-ui, sans-serif`;
+      while (context.measureText(name).width > maxWidth && size > 37) {
+        size -= 1;
         context.font = `600 ${size}px system-ui, sans-serif`;
-        lines = [""];
-        for (const character of name.trim()) {
-          const last = lines.length - 1;
-          if (context.measureText(lines[last] + character).width > 420) lines.push(character);
-          else lines[last] += character;
+      }
+      let lines = [name];
+      if (context.measureText(name).width > maxWidth) {
+        const words = name.trim().split(/\s+/);
+        let best;
+        for (let split = 1; split < words.length; split++) {
+          const first = words.slice(0, split).join(" ");
+          const second = words.slice(split).join(" ");
+          const firstWidth = context.measureText(first).width;
+          const secondWidth = context.measureText(second).width;
+          if (Math.max(firstWidth, secondWidth) <= maxWidth &&
+              (!best || Math.abs(firstWidth - secondWidth) < best.difference)) {
+            best = { lines: [first, second], difference: Math.abs(firstWidth - secondWidth) };
+          }
         }
-        if (lines.length * (size + 8) <= 190 || size <= 14) break;
-        size -= 2;
-      } while (true);
-      if (lines.length > 8) {
-        lines = lines.slice(0, 8);
-        lines[7] = lines[7].slice(0, -1) + "…";
+        if (best) lines = best.lines;
       }
       lines.forEach((line, index) => {
-        context.fillText(line, 256, 130 + (index - (lines.length - 1) / 2) * (size + 8));
+        context.fillText(line, 256, 132 + (index - (lines.length - 1) / 2) * (size + 8), maxWidth);
       });
       context.font = "28px system-ui, sans-serif";
       context.fillStyle = colors.getPropertyValue("--person-muted").trim();
@@ -1039,6 +1318,11 @@
       card.type = "button";
       card.className = `person ${role}`;
       card.dataset.personId = person.id;
+      card.setAttribute("aria-label", `${person.name || `Unknown person (${person.id})`}, ${role === "center" ? "center person" : role.replace("-", " ")}`);
+      card.title = person.name || `Unknown person (${person.id})`;
+      if (cardColors.value === "sex" && person.sex.trim().toUpperCase() === "M") card.classList.add("sex-m");
+      if (cardColors.value === "sex" && person.sex.trim().toUpperCase() === "F") card.classList.add("sex-f");
+      if (role === "center") card.setAttribute("aria-current", "true");
 
       const name = document.createElement("strong");
       name.textContent = displayName;
@@ -1047,12 +1331,10 @@
       card.append(name, label);
       peopleList.append(card);
 
-      const isSecondDegree = ["grandparent", "spouse-parent", "grandchild"].includes(role);
-      const scale = isSecondDegree ? 0.7 : 1;
-      const height = (role === "center" ? 2.1 : 1.9) * scale;
-      const width = (role === "center" ? 3.36 : 3.04) * scale;
+      const height = role === "center" ? 2.73 : 2.6;
+      const width = role === "center" ? 4.4 : 4.2;
       const border = role === "center" ? 0.08 : 0.045;
-      const radius = 0.20 * scale;
+      const radius = 0.24;
       const shape = roundedShape(width, height, radius);
       const backing = new THREE.Mesh(
         new THREE.ExtrudeGeometry(shape, { depth: 0.09, bevelEnabled: false, curveSegments: 8 }),
@@ -1073,7 +1355,7 @@
       const tile = new THREE.Mesh(
         geometry,
         new THREE.MeshBasicMaterial({
-          map: tileTexture(displayName, role, colors),
+          map: tileTexture(displayName, role, colors, person),
           side: THREE.DoubleSide
         })
       );
@@ -1144,28 +1426,36 @@
       const familyColor = colors.getPropertyValue("--connector").trim();
       const spouseColor = colors.getPropertyValue("--spouse-connector").trim();
       const add = (points, color, bus = false) => routes.push({ points, color, bus, familyIndex });
+      const cardEdge = (point, toward) => {
+        const dx = toward.x - point.x, dz = toward.z - point.z;
+        if (Math.abs(dx) >= Math.abs(dz)) {
+          return { x: point.x + Math.sign(dx || 1) * 2.1, z: point.z };
+        }
+        return { x: point.x, z: point.z + Math.sign(dz || 1) * 0.12 };
+      };
       let parentAnchor = parents[0];
 
       if (parents.length === 2) {
         const [first, second] = parents;
         const vertical = Math.abs(first.x - second.x) < 0.01;
         if (vertical) {
-          const railX = first.x - 0.8 + lane;
+          const railX = first.x - 2.8 + lane;
           parentAnchor = { x: railX, z: (first.z + second.z) / 2 };
           for (const offset of [-0.09, 0.09]) {
             const x = railX + offset;
-            add([first, { x, z: first.z }, { x, z: second.z }, second], spouseColor);
+            add([cardEdge(first, { x, z: first.z }), { x, z: first.z }, { x, z: second.z },
+              cardEdge(second, { x, z: second.z })], spouseColor);
           }
           if (children.length) add([
             { x: railX - 0.09, z: parentAnchor.z }, { x: railX + 0.09, z: parentAnchor.z }
           ], familyColor);
         } else {
           const railZ = (Math.abs(first.z - second.z) < 0.01
-            ? first.z - 0.8 : (first.z + second.z) / 2) + lane;
+            ? first.z - 1.4 : (first.z + second.z) / 2) + lane;
           parentAnchor = { x: (first.x + second.x) / 2, z: railZ };
           for (const offset of [-0.09, 0.09]) {
             const z = railZ + offset;
-            add([first, { x: first.x, z }, { x: second.x, z }, second], spouseColor);
+            add([cardEdge(first, second), { x: first.x, z }, { x: second.x, z }, cardEdge(second, first)], spouseColor);
           }
           if (children.length) add([
             { x: parentAnchor.x, z: railZ - 0.09 }, { x: parentAnchor.x, z: railZ + 0.09 }
@@ -1183,9 +1473,13 @@
       if (parentAnchor) xs.push(parentAnchor.x);
       const left = Math.min(...xs), right = Math.max(...xs);
       add([{ x: left, z: busZ }, { x: right, z: busZ }], familyColor, true);
-      for (const child of children) add([child, { x: child.x, z: busZ }], familyColor);
+      for (const child of children) {
+        const rail = { x: child.x, z: busZ };
+        add([cardEdge(child, rail), rail], familyColor);
+      }
       if (parentAnchor) {
-        add([parentAnchor, { x: parentAnchor.x, z: busZ }], familyColor);
+        const rail = { x: parentAnchor.x, z: busZ };
+        add([parents.length === 1 ? cardEdge(parentAnchor, rail) : parentAnchor, rail], familyColor);
       } else {
         const marker = new THREE.Mesh(
           new THREE.RingGeometry(0.1, 0.17, 24),
@@ -1254,6 +1548,12 @@
         const right = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
         const up = new THREE.Vector3().crossVectors(direction, right).normalize();
         const tanVertical = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+        const picker = document.querySelector(".picker-panel").getBoundingClientRect();
+        const toolbar = document.querySelector(".toolbar").getBoundingClientRect();
+        const topInset = Math.max(0, picker.bottom) + 16;
+        const bottomInset = Math.max(0, height - toolbar.top) + 16;
+        const heightRatio = Math.max(0.4, (height - topInset - bottomInset) / height);
+        const widthRatio = Math.max(0.6, (width - 32) / width);
         let distance = 8;
         for (const x of [bounds.min.x, bounds.max.x]) {
           for (const y of [bounds.min.y, bounds.max.y]) {
@@ -1261,11 +1561,14 @@
               const offset = new THREE.Vector3(x, y, z).sub(target);
               const depth = offset.dot(direction);
               distance = Math.max(distance,
-                Math.abs(offset.dot(right)) * 1.15 / (tanVertical * camera.aspect) + depth,
-                Math.abs(offset.dot(up)) * 1.15 / tanVertical + depth);
+                Math.abs(offset.dot(right)) * 1.15 / (tanVertical * camera.aspect * widthRatio) + depth,
+                Math.abs(offset.dot(up)) * 1.15 / (tanVertical * heightRatio) + depth);
             }
           }
         }
+        target.add(up.multiplyScalar(
+          distance * tanVertical * (topInset - bottomInset) / height
+        ));
         controls.target.copy(target);
         camera.position.copy(target).add(direction.multiplyScalar(distance));
         camera.far = Math.max(1000, distance * 5);
@@ -1287,7 +1590,6 @@
       const relatives = relativesOf(center, individuals, families);
       if (!showSecondRelatives.checked) {
         relatives.grandparents = [];
-        relatives.spouseParents = [];
         relatives.grandchildren = [];
       }
       centerPersonId = center.id;
@@ -1302,19 +1604,13 @@
       };
       place(center, "center", 0, 0);
       const row = (people, role, z) => people.forEach((person, index) =>
-        place(person, role, (index - (people.length - 1) / 2) * 3.8, z));
-      row(relatives.parents, "parent", -5);
-      row(relatives.grandparents, "grandparent", -10);
-      relatives.spouses.forEach((person, index) => place(person, "spouse", -4 - index * 3.8, 0));
-      relatives.spouseParents.forEach(({ spouse, parents }) => {
-        const spouseX = -4 - relatives.spouses.indexOf(spouse) * 3.8;
-        parents.forEach((person, parentIndex) => place(
-          person, "spouse-parent", spouseX - 1.7 + parentIndex * 3.4, -5.8
-        ));
-      });
-      relatives.siblings.forEach((person, index) => place(person, "sibling", 4 + index * 3.8, 0));
-      row(relatives.children, "child", 5);
-      row(relatives.grandchildren, "grandchild", 10);
+        place(person, role, (index - (people.length - 1) / 2) * 5.2, z));
+      row(relatives.parents, "parent", -6);
+      row(relatives.grandparents, "grandparent", -12);
+      relatives.spouses.forEach((person, index) => place(person, "spouse", -5.2 - index * 5.2, 0));
+      relatives.siblings.forEach((person, index) => place(person, "sibling", 5.2 + index * 5.2, 0));
+      row(relatives.children, "child", 6);
+      row(relatives.grandchildren, "grandchild", 12);
       const visibleFamilies = [];
       for (const family of families.values()) {
         const parents = [...new Set([family.husband, family.wife])].filter((id) => positions.has(id));
@@ -1337,6 +1633,7 @@
       members.add(floor);
 
       const count = positions.size - 1;
+      memberCount.textContent = `${count} family member${count === 1 ? "" : "s"} shown`;
       status.dataset.error = "false";
       status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} family member${count === 1 ? "" : "s"} shown.`;
       familyView.hidden = false;
@@ -1399,14 +1696,14 @@
         familyView.hidden = true;
         clearScene();
         peopleList.replaceChildren();
-        personSearch.value = "";
+        personPicker.value = "";
         document.querySelector("#explorer-help").hidden = false;
         welcome.classList.add("loaded");
         uploadArea.classList.add("loaded");
+        main.classList.add("exploring");
         document.querySelector("#upload-label").textContent = "Change file";
         const filename = document.querySelector("#filename");
         filename.textContent = file.name;
-        filename.hidden = false;
         renderFamily(data);
         familyData = data;
       } catch (error) {
