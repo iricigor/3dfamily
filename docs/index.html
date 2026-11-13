@@ -32,6 +32,7 @@
       --child-bg: #e8f7f1;
       --spouse-bg: #fff3e5;
       --sibling-bg: #fff0f2;
+      --second-bg: #f2f4f8;
       --person-muted: #46556d;
     }
 
@@ -58,6 +59,7 @@
       --child-bg: #294239;
       --spouse-bg: #493a2c;
       --sibling-bg: #49343a;
+      --second-bg: #394150;
       --person-muted: #c0cadd;
     }
 
@@ -247,6 +249,13 @@
       background: var(--sibling-bg);
     }
 
+    .person.grandparent,
+    .person.spouse-parent,
+    .person.grandchild {
+      background: var(--second-bg);
+      opacity: 0.72;
+    }
+
     [hidden] {
       display: none !important;
     }
@@ -277,11 +286,12 @@
       <img class="tree-icon" src="tree-icon.svg" width="48" height="48" alt="">
       <h1>3D Family</h1>
       <div class="header-controls">
+        <label class="name-setting"><input id="show-second-relatives" type="checkbox" checked> Show 2nd relatives</label>
         <label class="name-setting"><input id="simplify-names" type="checkbox" checked> Simplify surnames</label>
         <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
       </div>
     </header>
-    <p class="intro">Upload a GEDCOM family tree to see the first person in the file and their close family.</p>
+    <p class="intro">Upload a GEDCOM family tree to see the first person in the file and their family.</p>
     <section class="upload" aria-label="Upload family tree">
       <label for="gedcom-file">Choose a GEDCOM file (.ged) or drop it here</label>
       <input id="gedcom-file" type="file" accept=".ged,.gedcom,text/plain">
@@ -294,6 +304,7 @@
         <span style="--swatch:#bcebd7">Children in front</span>
         <span style="--swatch:#ffdfb8">Spouses left</span>
         <span style="--swatch:#ffd2d8">Siblings right</span>
+        <span style="--swatch:#dfe3eb">2nd relatives</span>
       </div>
       <p class="intro" id="scene-help">Drag to orbit, scroll or pinch to zoom, and right-drag to pan. Select a tile to center that person.</p>
       <div class="stage" tabindex="0" role="region" aria-label="3D family view" aria-describedby="scene-help">
@@ -324,6 +335,7 @@
     const peopleList = document.querySelector("#people");
     const themeToggle = document.querySelector("#theme-toggle");
     const simplifyNames = document.querySelector("#simplify-names");
+    const showSecondRelatives = document.querySelector("#show-second-relatives");
     let familyData = null;
     let centerPersonId;
     let THREE, renderer, world, camera, controls, members;
@@ -340,6 +352,10 @@
     });
 
     simplifyNames.addEventListener("change", () => {
+      if (familyData) renderFamily(familyData, centerPersonId);
+    });
+
+    showSecondRelatives.addEventListener("change", () => {
       if (familyData) renderFamily(familyData, centerPersonId);
     });
 
@@ -390,6 +406,9 @@
       const siblings = new Set();
       const spouses = new Set();
       const children = new Set();
+      const grandparents = new Set();
+      const spouseParents = [];
+      const grandchildren = new Set();
 
       for (const familyId of center.famc) {
         const family = families.get(familyId);
@@ -415,12 +434,47 @@
       const people = (ids) => [...ids]
         .map((id) => individuals.get(id))
         .filter(Boolean);
+      const directIds = new Set([center.id, ...parents, ...siblings, ...spouses, ...children]);
+      const secondIds = new Set();
+      const addSecondDegree = (ids) => people(ids)
+        .filter((person) => !directIds.has(person.id) && !secondIds.has(person.id))
+        .filter((person) => secondIds.add(person.id));
+
+      for (const parent of people(parents)) {
+        for (const familyId of parent.famc) {
+          const family = families.get(familyId);
+          if (!family) continue;
+          if (family.husband) grandparents.add(family.husband);
+          if (family.wife) grandparents.add(family.wife);
+        }
+      }
+
+      for (const spouse of people(spouses)) {
+        const spouseParentIds = new Set();
+        for (const familyId of spouse.famc) {
+          const family = families.get(familyId);
+          if (!family) continue;
+          if (family.husband) spouseParentIds.add(family.husband);
+          if (family.wife) spouseParentIds.add(family.wife);
+        }
+        spouseParents.push({ spouse, parents: addSecondDegree(spouseParentIds) });
+      }
+
+      for (const child of people(children)) {
+        for (const familyId of child.fams) {
+          const family = families.get(familyId);
+          if (family) family.children.forEach((id) => grandchildren.add(id));
+        }
+      }
 
       return {
         parents: people(parents),
         siblings: people(siblings),
         spouses: people(spouses),
-        children: people(children)
+        children: people(children),
+        grandparents: addSecondDegree(grandparents),
+        spouseParents,
+        grandchildren: addSecondDegree(grandchildren)
       };
     }
 
@@ -502,7 +556,9 @@
       canvas.width = 512;
       canvas.height = 320;
       const context = canvas.getContext("2d");
-      context.fillStyle = colors.getPropertyValue(`--${role}-bg`).trim();
+      context.fillStyle = colors.getPropertyValue(
+        ["grandparent", "spouse-parent", "grandchild"].includes(role) ? "--second-bg" : `--${role}-bg`
+      ).trim();
       context.fillRect(0, 0, 512, 320);
       context.strokeStyle = colors.getPropertyValue(role === "center" ? "--center-border" : "--border").trim();
       context.lineWidth = role === "center" ? 12 : 6;
@@ -539,7 +595,7 @@
       return name.split(/\s+/)[0] || name;
     }
 
-    function addPerson(person, role, x, z, colors, center) {
+    function addPerson(person, role, x, z, colors, center, connectorStart = null) {
       const displayName = personDisplayName(person, center);
       const card = document.createElement("button");
       card.type = "button";
@@ -549,16 +605,23 @@
       const name = document.createElement("strong");
       name.textContent = displayName;
       const label = document.createElement("small");
-      label.textContent = role === "center" ? "Center person" : role;
+      label.textContent = role === "center" ? "Center person" : role.replace("-", " ");
       card.append(name, label);
       peopleList.append(card);
 
-      const height = role === "center" ? 2.1 : 1.9;
-      const width = role === "center" ? 3.36 : 3.04;
+      const isSecondDegree = ["grandparent", "spouse-parent", "grandchild"].includes(role);
+      const scale = isSecondDegree ? 0.7 : 1;
+      const height = (role === "center" ? 2.1 : 1.9) * scale;
+      const width = (role === "center" ? 3.36 : 3.04) * scale;
       const texture = tileTexture(displayName, role, colors);
       const tile = new THREE.Mesh(
         new THREE.PlaneGeometry(width, height),
-        new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({
+          map: texture,
+          side: THREE.DoubleSide,
+          transparent: isSecondDegree,
+          opacity: isSecondDegree ? 0.72 : 1
+        })
       );
       tile.position.set(x, height / 2, z);
       tile.userData.personId = person.id;
@@ -583,15 +646,24 @@
       reflectionTexture.colorSpace = THREE.SRGBColorSpace;
       const reflection = new THREE.Mesh(
         new THREE.PlaneGeometry(width, height),
-        new THREE.MeshBasicMaterial({ map: reflectionTexture, transparent: true, depthWrite: false })
+        new THREE.MeshBasicMaterial({
+          map: reflectionTexture,
+          transparent: true,
+          opacity: isSecondDegree ? 0.45 : 1,
+          depthWrite: false
+        })
       );
       reflection.rotation.x = -Math.PI / 2;
       reflection.position.set(x, 0.015, z + height / 2);
       members.add(reflection);
 
       if (role !== "center") {
-        const start = new THREE.Vector3(0, role === "parent" ? 2.1 : 0.06, 0);
-        const end = new THREE.Vector3(x, role === "child" ? height : 0.06, z);
+        const start = new THREE.Vector3(
+          role === "spouse-parent" ? connectorStart?.x ?? 0 : 0,
+          ["parent", "grandparent"].includes(role) ? 2.1 : 0.06,
+          role === "grandparent" ? -5 : role === "grandchild" ? 5 : 0
+        );
+        const end = new THREE.Vector3(x, role === "child" || role === "grandchild" ? height : 0.06, z);
         const curve = new THREE.LineCurve3(start, end);
         const color = colors.getPropertyValue(role === "spouse" ? "--spouse-connector" : "--connector").trim();
         members.add(new THREE.Mesh(
@@ -650,6 +722,11 @@
       if (!center) throw new Error("No people were found. Choose a GEDCOM file containing INDI records.");
 
       const relatives = relativesOf(center, individuals, families);
+      if (!showSecondRelatives.checked) {
+        relatives.grandparents = [];
+        relatives.spouseParents = [];
+        relatives.grandchildren = [];
+      }
       centerPersonId = center.id;
       clearScene();
       peopleList.replaceChildren();
@@ -658,10 +735,19 @@
       const row = (people, role, z) => people.forEach((person, index) =>
         addPerson(person, role, (index - (people.length - 1) / 2) * 3.8, z, colors, center));
       row(relatives.parents, "parent", -5);
+      row(relatives.grandparents, "grandparent", -10);
       addPerson(center, "center", 0, 0, colors, center);
       relatives.spouses.forEach((person, index) => addPerson(person, "spouse", -4 - index * 3.8, 0, colors, center));
+      relatives.spouseParents.forEach(({ spouse, parents }) => {
+        const spouseX = -4 - relatives.spouses.indexOf(spouse) * 3.8;
+        parents.forEach((person, parentIndex) => addPerson(
+          person, "spouse-parent", spouseX - 1.7 + parentIndex * 3.4, -5.8,
+          colors, center, { x: spouseX }
+        ));
+      });
       relatives.siblings.forEach((person, index) => addPerson(person, "sibling", 4 + index * 3.8, 0, colors, center));
       row(relatives.children, "child", 5);
+      row(relatives.grandchildren, "grandchild", 10);
       const floorWidth = Math.max(18, ...tiles.map((tile) => Math.abs(tile.position.x) * 2 + 8));
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(floorWidth, 22),
@@ -673,9 +759,11 @@
       members.add(floor);
 
       const count = relatives.parents.length + relatives.children.length +
-        relatives.spouses.length + relatives.siblings.length;
+        relatives.spouses.length + relatives.siblings.length + relatives.grandparents.length +
+        relatives.spouseParents.reduce((total, item) => total + item.parents.length, 0) +
+        relatives.grandchildren.length;
       status.dataset.error = "false";
-      status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} close family member${count === 1 ? "" : "s"} shown.`;
+      status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} family member${count === 1 ? "" : "s"} shown.`;
       familyView.hidden = false;
       layoutScene(true);
     }
