@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3D Family</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, sans-serif;
+      color: #172033;
+      background: #f3f6fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+    }
+
+    main {
+      width: min(100% - 32px, 1200px);
+      margin: 0 auto;
+      padding: 36px 0 48px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .intro {
+      margin: 8px 0 24px;
+      color: #536078;
+    }
+
+    .upload {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid #d5deeb;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    input[type="file"] {
+      max-width: 100%;
+      font: inherit;
+    }
+
+    .status {
+      min-height: 1.5em;
+      margin: 12px 0 0;
+      color: #536078;
+    }
+
+    .status[data-error="true"] {
+      color: #a12626;
+    }
+
+    .key {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 24px;
+      margin: 22px 0 4px;
+      color: #536078;
+      font-size: 0.9rem;
+    }
+
+    .key span::before {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 7px;
+      border-radius: 50%;
+      background: var(--swatch);
+      content: "";
+    }
+
+    .stage {
+      overflow: auto hidden;
+      min-height: 560px;
+      padding: 12px 0 20px;
+      perspective: 1000px;
+      perspective-origin: 50% 45%;
+    }
+
+    .scene {
+      position: relative;
+      height: 530px;
+      min-width: 100%;
+      margin: 0 auto;
+      transform-style: preserve-3d;
+    }
+
+    .person {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: 174px;
+      min-height: 104px;
+      align-content: center;
+      justify-items: center;
+      padding: 14px;
+      border: 1px solid #d5deeb;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 12px 24px rgb(30 45 70 / 12%);
+      text-align: center;
+      transform: translate3d(var(--x), var(--y), var(--z)) translate(-50%, -50%);
+      transform-style: preserve-3d;
+    }
+
+    .person strong {
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .person small {
+      margin-top: 6px;
+      color: #64728a;
+      font-size: 0.78rem;
+    }
+
+    .person.center {
+      z-index: 1;
+      width: 220px;
+      min-height: 126px;
+      border: 2px solid #334f9d;
+      background: #e9efff;
+      box-shadow: 0 16px 30px rgb(30 45 70 / 18%);
+    }
+
+    .person.parent {
+      background: #f0edff;
+    }
+
+    .person.child {
+      width: 188px;
+      min-height: 112px;
+      background: #e8f7f1;
+    }
+
+    .person.spouse {
+      background: #fff3e5;
+    }
+
+    .person.sibling {
+      background: #fff0f2;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      main {
+        width: min(100% - 20px, 1200px);
+        padding-top: 24px;
+      }
+
+      .stage {
+        min-height: 500px;
+      }
+
+      .scene {
+        height: 480px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>3D Family</h1>
+    <p class="intro">Upload a GEDCOM family tree to see the first person in the file and their close family.</p>
+    <section class="upload" aria-label="Upload family tree">
+      <label for="gedcom-file">Choose a GEDCOM file (.ged)</label>
+      <input id="gedcom-file" type="file" accept=".ged,.gedcom,text/plain">
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite">Your file is read in this page and is not uploaded to a server.</p>
+    <div id="family-view" hidden>
+      <div class="key" aria-label="Family member positions">
+        <span style="--swatch:#d9d3ff">Parents behind</span>
+        <span style="--swatch:#b7d4ff">Center</span>
+        <span style="--swatch:#bcebd7">Children in front</span>
+        <span style="--swatch:#ffdfb8">Spouses left</span>
+        <span style="--swatch:#ffd2d8">Siblings right</span>
+      </div>
+      <div class="stage" aria-label="Static three-dimensional family view">
+        <div id="scene" class="scene"></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    "use strict";
+
+    const fileInput = document.querySelector("#gedcom-file");
+    const status = document.querySelector("#status");
+    const familyView = document.querySelector("#family-view");
+    const scene = document.querySelector("#scene");
+
+    function parseGedcom(text) {
+      const individuals = new Map();
+      const families = new Map();
+      let current = null;
+
+      for (const rawLine of text.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+        const line = rawLine.trim();
+        if (/^0(?:\s|$)/.test(line)) {
+          current = null;
+          const record = line.match(/^0\s+(@[^@]+@)\s+(INDI|FAM)\b/);
+          if (!record) continue;
+          current = record[2] === "INDI"
+            ? { type: "INDI", id: record[1], name: "", sex: "", famc: [], fams: [] }
+            : { type: "FAM", id: record[1], husband: "", wife: "", children: [] };
+          (current.type === "INDI" ? individuals : families).set(current.id, current);
+          continue;
+        }
+
+        if (!current) continue;
+
+        const field = line.match(/^1\s+(\w+)(?:\s+(.*))?$/);
+        if (!field) continue;
+        const [, tag, value = ""] = field;
+
+        if (current.type === "INDI") {
+          if (tag === "NAME") current.name = value.replaceAll("/", "").replace(/\s+/g, " ").trim();
+          if (tag === "SEX") current.sex = value.trim();
+          if (tag === "FAMC") current.famc.push(value.trim());
+          if (tag === "FAMS") current.fams.push(value.trim());
+        } else {
+          if (tag === "HUSB") current.husband = value.trim();
+          if (tag === "WIFE") current.wife = value.trim();
+          if (tag === "CHIL") current.children.push(value.trim());
+        }
+      }
+
+      return { individuals, families };
+    }
+
+    function relativesOf(center, individuals, families) {
+      const parents = new Set();
+      const siblings = new Set();
+      const spouses = new Set();
+      const children = new Set();
+
+      for (const familyId of center.famc) {
+        const family = families.get(familyId);
+        if (!family) continue;
+        if (family.husband) parents.add(family.husband);
+        if (family.wife) parents.add(family.wife);
+        for (const childId of family.children) {
+          if (childId !== center.id) siblings.add(childId);
+        }
+      }
+
+      for (const familyId of center.fams) {
+        const family = families.get(familyId);
+        if (!family) continue;
+        for (const partnerId of [family.husband, family.wife]) {
+          if (partnerId && partnerId !== center.id) spouses.add(partnerId);
+        }
+        for (const childId of family.children) {
+          if (childId !== center.id) children.add(childId);
+        }
+      }
+
+      const people = (ids) => [...ids]
+        .map((id) => individuals.get(id))
+        .filter(Boolean);
+
+      return {
+        parents: people(parents),
+        siblings: people(siblings),
+        spouses: people(spouses),
+        children: people(children)
+      };
+    }
+
+    function addPerson(person, role, x, y, z) {
+      const card = document.createElement("article");
+      card.className = `person ${role}`;
+      card.style.setProperty("--x", `${x}px`);
+      card.style.setProperty("--y", `${y}px`);
+      card.style.setProperty("--z", `${z}px`);
+
+      const name = document.createElement("strong");
+      name.textContent = person.name || `Unknown person (${person.id})`;
+      const label = document.createElement("small");
+      label.textContent = role === "center" ? "Center person" : role;
+      card.append(name, label);
+      scene.append(card);
+    }
+
+    function spreadInRow(people, role, y, z, gap) {
+      people.forEach((person, index) => {
+        const x = (index - (people.length - 1) / 2) * gap;
+        addPerson(person, role, x, y, z);
+      });
+    }
+
+    function renderFamily({ individuals, families }) {
+      const center = individuals.values().next().value;
+      if (!center) throw new Error("No people were found. Choose a GEDCOM file containing INDI records.");
+
+      const relatives = relativesOf(center, individuals, families);
+      const groupExtent = Math.max(
+        460,
+        relatives.parents.length * 190,
+        relatives.children.length * 205,
+        680 + Math.max(0, Math.max(relatives.spouses.length, relatives.siblings.length) - 1) * 360
+      );
+      scene.replaceChildren();
+      scene.style.width = `${groupExtent}px`;
+      spreadInRow(relatives.parents, "parent", -150, -190, 190);
+      addPerson(center, "center", 0, 0, 0);
+      spreadInRow(relatives.children, "child", 150, 190, 205);
+      relatives.spouses.forEach((person, index) => addPerson(person, "spouse", -250 - index * 180, 0, 0));
+      relatives.siblings.forEach((person, index) => addPerson(person, "sibling", 250 + index * 180, 0, 0));
+
+      const count = relatives.parents.length + relatives.children.length +
+        relatives.spouses.length + relatives.siblings.length;
+      status.dataset.error = "false";
+      status.textContent = `${center.name || `Unknown person (${center.id})`} is centered. ${count} close family member${count === 1 ? "" : "s"} shown.`;
+      familyView.hidden = false;
+    }
+
+    fileInput.addEventListener("change", async () => {
+      familyView.hidden = true;
+      scene.replaceChildren();
+      delete status.dataset.error;
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+
+      try {
+        renderFamily(parseGedcom(await file.text()));
+      } catch (error) {
+        status.dataset.error = "true";
+        status.textContent = error instanceof Error ? error.message : "The GEDCOM file could not be read.";
+      }
+    });
+  </script>
+</body>
+</html>
