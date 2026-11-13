@@ -39,10 +39,19 @@
             </label>
             <p class="relationship-legend">Card labels show each person’s relationship. Blue-gray connectors link parents and children; warm connectors mark spouse pairs.</p>
             <p id="color-legend" class="color-legend" hidden>M: blue; F: rose. Missing, unknown, and other values use neutral cards. This represents the recorded GEDCOM SEX field.</p>
+            <span id="member-count" hidden></span>
+            <details class="relatives" hidden>
+              <summary>Family members and relationships</summary>
+              <div id="people"></div>
+            </details>
           </section>
           <section class="menu-section" aria-labelledby="menu-view-heading">
             <h2 id="menu-view-heading" class="menu-heading">View</h2>
             <label class="name-setting"><input id="camera-mode-selector" type="checkbox" checked> Show Pan/Rotate controls</label>
+            <div id="camera-interaction" class="menu-actions" role="group" aria-label="Camera interaction" hidden>
+              <button id="pan-mode" class="menu-action" type="button" aria-pressed="false">Pan</button>
+              <button id="rotate-mode" class="menu-action" type="button" aria-pressed="true">Rotate</button>
+            </div>
             <div id="view-actions" class="menu-actions" role="group" aria-label="Camera view" hidden>
               <button id="fit-family" class="menu-action" type="button">Fit family</button>
               <button id="reset-view" class="menu-action" type="button">Reset view</button>
@@ -97,21 +106,6 @@
     </section>
     <p id="status" class="status" role="status" aria-live="polite"></p>
     <div id="family-view" hidden>
-      <div class="explorer-ui">
-        <section class="picker-panel" aria-label="Family selection">
-          <span id="member-count"></span>
-          <details class="relatives">
-            <summary>Family members and relationships</summary>
-            <div id="people"></div>
-          </details>
-        </section>
-        <div class="toolbar" aria-label="Camera controls">
-          <div id="camera-interaction" class="toolbar-group" role="group" aria-label="Camera interaction">
-            <button id="pan-mode" type="button" aria-pressed="false">Pan</button>
-            <button id="rotate-mode" type="button" aria-pressed="true">Rotate</button>
-          </div>
-        </div>
-      </div>
       <div class="stage" tabindex="0" role="region" aria-label="3D family view">
         <div id="scene" class="scene"></div>
       </div>
