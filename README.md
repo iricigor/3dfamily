@@ -4,7 +4,7 @@ Explore the people and relationships in a family tree as an interactive 3D view.
 
 **[Open 3D Family](https://iricigor.github.io/3dfamily/)**
 
-![3D Family welcome screen with fictional names Alex Example, Sam Example, and Jamie Example](docs/screenshot.png)
+![3D family tree view with fictional relatives around Sam Finch](docs/screenshot.png)
 
 ## Get started
 
