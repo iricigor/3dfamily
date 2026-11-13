@@ -249,6 +249,7 @@ function setHoveredPerson(personId) {
         mesh.material.transparent = transparent;
         mesh.material.needsUpdate = true;
       }
+      mesh.material.depthWrite = !transparent;
       mesh.material.opacity = transparent ? 0.5 : 1;
     }
   }
