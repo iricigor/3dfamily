@@ -186,7 +186,10 @@ function addPerson(person, role, x, z, colors, center) {
   rear.userData.personId = person.id;
   members.add(rear);
   tiles.push(rear);
-  for (const mesh of [backing, tile, rear]) mesh.userData.baseY = height / 2;
+  for (const mesh of [backing, tile, rear]) {
+    mesh.userData.baseY = height / 2;
+    mesh.userData.baseZ = mesh.position.z - z;
+  }
   personCards.set(person.id, [backing, tile, rear]);
 
   const shadowCanvas = document.createElement("canvas");
@@ -245,6 +248,7 @@ function setHoveredPerson(personId) {
       const scale = highlighted ? 1.2 : 1;
       mesh.scale.setScalar(scale);
       mesh.position.y = mesh.userData.baseY * scale;
+      mesh.position.z = meshes[0].position.z + mesh.userData.baseZ * scale;
       if (mesh.material.transparent !== transparent) {
         mesh.material.transparent = transparent;
         mesh.material.needsUpdate = true;
