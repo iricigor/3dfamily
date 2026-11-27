@@ -17,7 +17,7 @@ async function createScene() {
     scene.append(renderer.domElement);
     world = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-    camera.position.set(0, 8, 15);
+    camera.position.set(0, 13, 12);
     controls = new OrbitControls(camera, renderer.domElement);
     controls.minPolarAngle = 0.1;
     controls.maxPolarAngle = Math.PI / 2 - 0.05;
@@ -53,7 +53,7 @@ async function createScene() {
     });
     document.querySelector("#reset-view")?.addEventListener("click", () => {
       pendingInitialFit = false;
-      camera.position.set(0, 8, 15);
+      camera.position.set(0, 13, 12);
       controls.target.set(0, 0, 0);
       layoutScene(true);
     });
@@ -147,7 +147,8 @@ async function createScene() {
       );
       raycaster.setFromCamera(pointer, camera);
       const hit = raycaster.intersectObjects(tiles, false)[0];
-      if (hit) renderFamily(familyData, hit.object.userData.personId);
+      if (hit?.object.userData.action === "next-partner") showNextPartner();
+      else if (hit) renderFamily(familyData, hit.object.userData.personId);
     });
   } catch {
     sceneResizeObserver?.disconnect();
