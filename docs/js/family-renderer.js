@@ -1,8 +1,39 @@
 "use strict";
 
 const cardScales = { center: 1.4, grandparent: 0.8 };
+const cardWidth = 5.4;
+const cardHeight = 2.25;
 const cardDepth = 0.16;
 const connectorRadius = 0.05;
+let connectorGlow = "";
+
+function addCardGlow(x, y, z, width, height, radius, color, strength) {
+  const pad = 0.6, pixels = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil((width + pad * 2) * pixels);
+  canvas.height = Math.ceil((height + pad * 2) * pixels);
+  const context = canvas.getContext("2d");
+  context.strokeStyle = color;
+  context.shadowColor = color;
+  context.lineWidth = 6;
+  for (const blur of [36, 18]) {
+    context.shadowBlur = blur;
+    context.beginPath();
+    context.roundRect(pad * pixels, pad * pixels, width * pixels, height * pixels, radius * pixels);
+    context.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const halo = new THREE.Mesh(
+    new THREE.PlaneGeometry(width + pad * 2, height + pad * 2),
+    new THREE.MeshBasicMaterial({
+      map: texture, transparent: true, opacity: strength, depthWrite: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+    })
+  );
+  halo.position.set(x, y, z);
+  members.add(halo);
+}
 
 function wrapName(name, context, maxWidth) {
   const words = name.trim().split(/\s+/);
@@ -56,53 +87,53 @@ function wrapName(name, context, maxWidth) {
 
 function tileTexture(name, role, colors, person) {
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 320;
+  const width = 768, height = 320, middle = width / 2;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext("2d");
   const sex = person.sex.trim().toUpperCase();
   const fill = cardColors.value === "sex" && (sex === "M" || sex === "F")
     ? sex === "M" ? "--sex-m-bg" : "--sex-f-bg"
     : "--card-bg";
   context.fillStyle = colors.getPropertyValue(fill).trim();
-  context.fillRect(0, 0, 512, 320);
+  context.fillRect(0, 0, width, height);
   if (document.documentElement.dataset.visualTheme === "heritage") {
     context.fillStyle = colors.getPropertyValue("--paper-grain").trim();
-    for (let grain = 0; grain < 160; grain++) {
-      context.fillRect((grain * 137) % 512, (grain * 89) % 320, 1, 1);
+    for (let grain = 0; grain < 240; grain++) {
+      context.fillRect((grain * 137) % width, (grain * 89) % height, 1, 1);
     }
   }
   if (role === "center" && document.documentElement.dataset.visualTheme === "heritage") {
     context.strokeStyle = colors.getPropertyValue("--center-inset").trim();
     context.lineWidth = 3;
     context.beginPath();
-    context.roundRect(12, 12, 488, 296, 18);
+    context.roundRect(12, 12, width - 24, height - 24, 18);
     context.stroke();
   }
   context.fillStyle = colors.getPropertyValue("--text").trim();
   context.textAlign = "center";
   context.textBaseline = "middle";
-  const maxWidth = 420;
+  const maxWidth = width - 96;
   const nameFont = colors.getPropertyValue("--name-font").trim() || "system-ui, sans-serif";
-  let size = 46;
+  let size = 72;
   context.font = `600 ${size}px ${nameFont}`;
-  while (context.measureText(name).width > maxWidth && size > 37) {
+  while (context.measureText(name).width > maxWidth && size > 52) {
     size -= 1;
     context.font = `600 ${size}px ${nameFont}`;
   }
   const lines = context.measureText(name).width > maxWidth
     ? wrapName(name, context, maxWidth)
     : [name];
-  const lineHeight = Math.max(size + 4, Math.min(size + 8, 220 / Math.max(1, lines.length - 1)));
+  const lineHeight = Math.max(size * 0.9, Math.min(size + 6, 160 / Math.max(1, lines.length - 1)));
   lines.forEach((line, index) => {
-    context.fillText(line, 256, 132 + (index - (lines.length - 1) / 2) * lineHeight);
+    context.fillText(line, middle, 126 + (index - (lines.length - 1) / 2) * lineHeight);
   });
-  if (role !== "center") {
-    context.font = "28px system-ui, sans-serif";
-    context.fillStyle = colors.getPropertyValue("--person-muted").trim();
-    context.fillText(role.replace("-", " "), 256, 270);
-  }
+  context.font = `500 44px ${colors.getPropertyValue("--ui-font").trim() || "system-ui, sans-serif"}`;
+  context.fillStyle = colors.getPropertyValue("--role-text").trim();
+  context.fillText(role === "center" ? "center person" : role.replace("-", " "), middle, 252);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   return texture;
 }
 
@@ -151,17 +182,18 @@ function addPerson(person, role, x, z, colors, center) {
   peopleList.append(card);
 
   const scale = cardScales[role] ?? 1;
-  const height = 2.6 * scale;
-  const width = 4.2 * scale;
-  const border = role === "center" ? 0.08 : 0.045;
+  const height = cardHeight * scale;
+  const width = cardWidth * scale;
+  const glow = colors.getPropertyValue(role === "center" ? "--center-glow" : "--card-glow").trim();
+  const border = (role === "center" ? 0.08 : 0.045) * (glow ? 1.6 : 1);
   const radius = 0.24 * scale;
   const shape = roundedShape(width, height, radius);
+  const rimColor = glow || colors.getPropertyValue(role === "center" ? "--center-border" : "--border").trim();
   const backing = new THREE.Mesh(
     new THREE.ExtrudeGeometry(shape, { depth: cardDepth, bevelEnabled: false, curveSegments: 8 }),
-    new THREE.MeshStandardMaterial({
-      color: colors.getPropertyValue(role === "center" ? "--center-border" : "--border").trim(),
-      roughness: 1, metalness: 0
-    })
+    glow
+      ? new THREE.MeshBasicMaterial({ color: rimColor })
+      : new THREE.MeshStandardMaterial({ color: rimColor, roughness: 1, metalness: 0 })
   );
   backing.position.set(x, height / 2, z);
   backing.renderOrder = 2;
@@ -193,6 +225,7 @@ function addPerson(person, role, x, z, colors, center) {
   tiles.push(rear);
   for (const mesh of [backing, tile, rear]) mesh.userData.baseY = height / 2;
   personCards.set(person.id, [backing, tile, rear]);
+  if (glow) addCardGlow(x, height / 2, z + cardDepth / 2, width, height, radius, glow, role === "center" ? 1 : 0.7);
 
   const shadowCanvas = document.createElement("canvas");
   shadowCanvas.width = 256;
@@ -244,9 +277,12 @@ function addPartnerToggle(x, z, visibleIndex, count, colors) {
   texture.colorSpace = THREE.SRGBColorSpace;
 
   const width = 2.8, height = 0.875, border = 0.045;
+  const glow = colors.getPropertyValue("--card-glow").trim();
   const backing = new THREE.Mesh(
     new THREE.ExtrudeGeometry(roundedShape(width, height, height / 2), { depth: cardDepth, bevelEnabled: false, curveSegments: 12 }),
-    new THREE.MeshStandardMaterial({ color: colors.getPropertyValue("--border").trim(), roughness: 1, metalness: 0 })
+    glow
+      ? new THREE.MeshBasicMaterial({ color: glow })
+      : new THREE.MeshStandardMaterial({ color: colors.getPropertyValue("--border").trim(), roughness: 1, metalness: 0 })
   );
   backing.position.set(x, height / 2, z);
   members.add(backing);
@@ -340,7 +376,7 @@ function addConnector(points, color, dashed = false) {
       for (let at = 0; at < length; at += dash + gap) {
         const from = start.clone().lerp(end, at / length);
         const to = start.clone().lerp(end, Math.min(length, at + dash) / length);
-        members.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(from, to), 1, connectorRadius, 8, false), material));
+        addTube(new THREE.LineCurve3(from, to), 1, material);
       }
     }
     return;
@@ -362,7 +398,24 @@ function addConnector(points, color, dashed = false) {
     curve.add(new THREE.LineCurve3(previous, path.at(-1)));
   }
   if (!curve.curves.length) return;
-  members.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, connectorRadius, 8, false), material));
+  addTube(curve, 24, material);
+}
+
+function addTube(curve, segments, material) {
+  members.add(new THREE.Mesh(new THREE.TubeGeometry(curve, segments, connectorRadius, 8, false), material));
+  if (!connectorGlow) return;
+  members.add(new THREE.Mesh(
+    new THREE.TubeGeometry(curve, segments, connectorRadius * 3.5, 8, false),
+    new THREE.MeshBasicMaterial({
+      color: connectorGlow, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending
+    })
+  ));
+}
+
+function addJunction({ x, z }, color) {
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(connectorRadius * 2.6, 16, 12), new THREE.MeshBasicMaterial({ color }));
+  dot.position.set(x, 0.06, z);
+  members.add(dot);
 }
 
 function cardEdge(card, side) {
@@ -391,6 +444,7 @@ function connectAncestors(routes, child, parents, color, familyIndex) {
   const railEnd = cardEdge(sorted.at(-1), "left");
   add([railStart, railEnd]);
   const stemX = Math.min(Math.max(start.x, railStart.x), railEnd.x);
+  routes.push({ points: [{ x: stemX, z: railStart.z }], color, familyIndex, junction: true });
   const midZ = (start.z + railStart.z) / 2;
   add(Math.abs(stemX - start.x) < 0.001
     ? [start, { x: stemX, z: railStart.z }]
@@ -405,6 +459,7 @@ function connectDescendants(routes, anchor, targets, busZ, color, familyIndex) {
     return;
   }
   add([anchor, { x: anchor.x, z: busZ }], targets.every((target) => target.dashed));
+  routes.push({ points: [{ x: anchor.x, z: busZ }], color, familyIndex, junction: true });
   for (const side of [-1, 1]) {
     const sideTargets = targets
       .filter((target) => Math.sign(Math.round((target.point.x - anchor.x) * 1000)) === side)
@@ -431,6 +486,10 @@ function drawConnectors(routes) {
     }
   }
   for (const route of routes) {
+    if (route.junction) {
+      addJunction(route.points[0], route.color);
+      continue;
+    }
     let part = [route.points[0]];
     for (let i = 1; i < route.points.length; i++) {
       const start = route.points[i - 1], end = route.points[i];
@@ -528,22 +587,27 @@ function renderFamily({ individuals, families }, centerId) {
     if (!positions.has(person.id)) positions.set(person.id, addPerson(person, role, x, z, colors, center));
     return positions.get(person.id);
   };
-  const gap = 1.6;
+  connectorGlow = colors.getPropertyValue("--connector-glow").trim();
+  const gap = 1.4;
+  const spacing = cardWidth + gap;
   const beside = (card, direction, role) =>
-    card.x + direction * (card.halfWidth + gap + 2.1 * (cardScales[role] ?? 1));
-  const row = (people, role, z, spacing = 5.2, offset = 0) => people.map((person, index) =>
-    place(person, role, offset + (index - (people.length - 1) / 2) * spacing, z));
+    card.x + direction * (card.halfWidth + gap + cardWidth / 2 * (cardScales[role] ?? 1));
+  const row = (people, role, z, step = spacing, offset = 0) => people.map((person, index) =>
+    place(person, role, offset + (index - (people.length - 1) / 2) * step, z));
   const centerCard = place(center, "center", 0, 0);
 
   const grandparentIds = new Set(relatives.grandparents.map((person) => person.id));
-  const parentCards = row(relatives.parents, "parent", -6, grandparentIds.size ? 9 : 5.2);
+  // Leave room for each parent's own pair of grandparents, with a clear gap between pairs.
+  const grandparentStep = cardWidth * cardScales.grandparent + gap;
+  const parentCards = row(relatives.parents, "parent", -6,
+    grandparentIds.size ? Math.max(spacing, grandparentStep + cardWidth * cardScales.grandparent + gap * 3) : spacing);
   const ancestorGroups = relatives.parents.map((parent, index) => {
     const ids = new Set(parent.famc.flatMap((familyId) => {
       const family = families.get(familyId);
       return family ? [family.husband, family.wife] : [];
     }).filter((id) => grandparentIds.has(id)));
     const people = [...ids].map((id) => individuals.get(id));
-    return { child: parentCards[index], parents: row(people, "grandparent", -12, 4.4, parentCards[index].x) };
+    return { child: parentCards[index], parents: row(people, "grandparent", -12, grandparentStep, parentCards[index].x) };
   });
 
   const partners = relatives.spouses;
@@ -571,7 +635,12 @@ function renderFamily({ individuals, families }, centerId) {
   const childEntries = relatives.children
     .map((child) => ({ child, dashed: otherParentHidden(child) }))
     .sort((a, b) => Number(b.dashed) - Number(a.dashed));
-  const childCards = row(childEntries.map(({ child }) => child), "child", 6);
+  // With mixed branches, shift the row so dashed children sit left of the center stem instead of under it.
+  const dashedCount = childEntries.filter(({ dashed }) => dashed).length;
+  const childOffset = dashedCount && dashedCount < childEntries.length
+    ? -(dashedCount - childEntries.length / 2) * spacing
+    : 0;
+  const childCards = row(childEntries.map(({ child }) => child), "child", 6, spacing, childOffset);
   const grandchildIds = new Set(relatives.grandchildren.map((person) => person.id));
   row(relatives.grandchildren, "grandchild", 12);
 

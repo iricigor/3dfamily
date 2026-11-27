@@ -45,6 +45,7 @@
   --scene-shadow: rgba(0, 0, 0, 0.25);
   --menu-shadow: rgba(0, 0, 0, 0.2);
   --panel-shadow: rgba(31, 53, 51, 0.08);
+  --role-text: var(--person-muted);
 }
 
 :root[data-theme="dark"] {
@@ -130,7 +131,11 @@
   --panel-bg: #10243a;
   --ground: #102b40;
   --ground-border: #1c455d;
-  --connector: #9cb8d0;
+  --connector: #4cb3ff;
+  --connector-glow: #1f8fff;
+  --card-glow: #3aa6ff;
+  --center-glow: #7fd0ff;
+  --role-text: #6fc8ff;
   --focus: #72dfeb;
   --tile-shadow: #0b1c2b;
   --tile-shadow-soft: rgba(0, 0, 0, 0.64);
