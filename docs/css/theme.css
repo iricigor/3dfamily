@@ -14,7 +14,6 @@
   --ground: #e5ede9;
   --ground-border: #cbd9d3;
   --connector: #657892;
-  --spouse-connector: #a45b0e;
   --focus: #172e78;
   --error: #a12626;
   --tile-shadow: #c6d1d1;
@@ -46,6 +45,7 @@
   --scene-shadow: rgba(0, 0, 0, 0.25);
   --menu-shadow: rgba(0, 0, 0, 0.2);
   --panel-shadow: rgba(31, 53, 51, 0.08);
+  --role-text: var(--person-muted);
 }
 
 :root[data-theme="dark"] {
@@ -58,7 +58,6 @@
   --ground: #293a37;
   --ground-border: #405650;
   --connector: #a5b5cf;
-  --spouse-connector: #f0b467;
   --focus: #a9bdff;
   --error: #ff9a9a;
   --tile-shadow: #35433f;
@@ -92,7 +91,6 @@
   --ground: #d9e7f0;
   --ground-border: #bfd4e2;
   --connector: #426d8c;
-  --spouse-connector: #177d92;
   --focus: #087c9a;
   --tile-shadow: #b9cbd5;
   --tile-shadow-soft: rgba(18, 54, 76, 0.48);
@@ -119,6 +117,7 @@
   --scene-ambient-intensity: 1.45;
   --scene-key-intensity: 1.35;
   --grid-line: rgba(15, 103, 133, 0.19);
+  --orbit-ring: #8fb9cf;
   --paper-grain: rgba(27, 73, 99, 0.03);
   --scene-shadow: rgba(32, 59, 76, 0.18);
   --menu-shadow: rgba(27, 55, 75, 0.2);
@@ -132,8 +131,11 @@
   --panel-bg: #10243a;
   --ground: #102b40;
   --ground-border: #1c455d;
-  --connector: #9cb8d0;
-  --spouse-connector: #41c0d0;
+  --connector: #4cb3ff;
+  --connector-glow: #1f8fff;
+  --card-glow: #3aa6ff;
+  --center-glow: #7fd0ff;
+  --role-text: #6fc8ff;
   --focus: #72dfeb;
   --tile-shadow: #0b1c2b;
   --tile-shadow-soft: rgba(0, 0, 0, 0.64);
@@ -160,6 +162,7 @@
   --scene-ambient-intensity: 1.05;
   --scene-key-intensity: 1.2;
   --grid-line: rgba(83, 194, 215, 0.2);
+  --orbit-ring: #2a6c8c;
   --paper-grain: rgba(206, 230, 245, 0.035);
   --scene-shadow: rgba(0, 0, 0, 0.42);
   --menu-shadow: rgba(0, 0, 0, 0.55);
@@ -177,7 +180,6 @@
   --ground: #e7dcc6;
   --ground-border: #d5c4a4;
   --connector: #756b61;
-  --spouse-connector: #986341;
   --focus: #805932;
   --tile-shadow: #cdbfa8;
   --tile-shadow-soft: rgba(62, 45, 28, 0.48);
@@ -218,7 +220,6 @@
   --ground: #382a20;
   --ground-border: #58422f;
   --connector: #c2aa88;
-  --spouse-connector: #c29659;
   --focus: #e2bd78;
   --tile-shadow: #211914;
   --tile-shadow-soft: rgba(0, 0, 0, 0.62);

@@ -137,6 +137,11 @@ document.querySelector("#change-file").addEventListener("click", () => fileInput
 peopleList.addEventListener("click", (event) => {
   const card = event.target.closest(".person");
   if (!familyData || !card || !peopleList.contains(card)) return;
+  if (card.classList.contains("partner-toggle")) {
+    showNextPartner();
+    peopleList.querySelector(".partner-toggle")?.focus();
+    return;
+  }
   renderFamily(familyData, card.dataset.personId);
   peopleList.querySelector(".person.center").focus();
 });
@@ -188,6 +193,7 @@ async function openFamilyFile(file) {
     document.querySelector("#upload-label").textContent = "Change file";
     const filename = document.querySelector("#filename");
     filename.textContent = file.name;
+    partnerIndexes.clear();
     renderFamily(data);
     familyData = data;
   } catch (error) {

@@ -26,6 +26,7 @@ let centerPersonId;
 let THREE, renderer, world, camera, controls, members;
 let tiles = [];
 let personCards = new Map();
+const partnerIndexes = new Map();
 let hoveredPersonId = null;
 let connectorPoints = [];
 let sceneReady;

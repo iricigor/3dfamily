@@ -1,5 +1,40 @@
 "use strict";
 
+const cardScales = { center: 1.4, grandparent: 0.8 };
+const cardWidth = 5.4;
+const cardHeight = 2.25;
+const cardDepth = 0.16;
+const connectorRadius = 0.05;
+let connectorGlow = "";
+
+function addCardGlow(x, y, z, width, height, radius, color, strength) {
+  const pad = 0.6, pixels = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil((width + pad * 2) * pixels);
+  canvas.height = Math.ceil((height + pad * 2) * pixels);
+  const context = canvas.getContext("2d");
+  context.strokeStyle = color;
+  context.shadowColor = color;
+  context.lineWidth = 6;
+  for (const blur of [36, 18]) {
+    context.shadowBlur = blur;
+    context.beginPath();
+    context.roundRect(pad * pixels, pad * pixels, width * pixels, height * pixels, radius * pixels);
+    context.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const halo = new THREE.Mesh(
+    new THREE.PlaneGeometry(width + pad * 2, height + pad * 2),
+    new THREE.MeshBasicMaterial({
+      map: texture, transparent: true, opacity: strength, depthWrite: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+    })
+  );
+  halo.position.set(x, y, z);
+  members.add(halo);
+}
+
 function wrapName(name, context, maxWidth) {
   const words = name.trim().split(/\s+/);
   let best;
@@ -52,53 +87,53 @@ function wrapName(name, context, maxWidth) {
 
 function tileTexture(name, role, colors, person) {
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 320;
+  const width = 768, height = 320, middle = width / 2;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext("2d");
   const sex = person.sex.trim().toUpperCase();
   const fill = cardColors.value === "sex" && (sex === "M" || sex === "F")
     ? sex === "M" ? "--sex-m-bg" : "--sex-f-bg"
     : "--card-bg";
   context.fillStyle = colors.getPropertyValue(fill).trim();
-  context.fillRect(0, 0, 512, 320);
+  context.fillRect(0, 0, width, height);
   if (document.documentElement.dataset.visualTheme === "heritage") {
     context.fillStyle = colors.getPropertyValue("--paper-grain").trim();
-    for (let grain = 0; grain < 160; grain++) {
-      context.fillRect((grain * 137) % 512, (grain * 89) % 320, 1, 1);
+    for (let grain = 0; grain < 240; grain++) {
+      context.fillRect((grain * 137) % width, (grain * 89) % height, 1, 1);
     }
   }
   if (role === "center" && document.documentElement.dataset.visualTheme === "heritage") {
     context.strokeStyle = colors.getPropertyValue("--center-inset").trim();
     context.lineWidth = 3;
     context.beginPath();
-    context.roundRect(12, 12, 488, 296, 18);
+    context.roundRect(12, 12, width - 24, height - 24, 18);
     context.stroke();
   }
   context.fillStyle = colors.getPropertyValue("--text").trim();
   context.textAlign = "center";
   context.textBaseline = "middle";
-  const maxWidth = 420;
+  const maxWidth = width - 96;
   const nameFont = colors.getPropertyValue("--name-font").trim() || "system-ui, sans-serif";
-  let size = 46;
+  let size = 72;
   context.font = `600 ${size}px ${nameFont}`;
-  while (context.measureText(name).width > maxWidth && size > 37) {
+  while (context.measureText(name).width > maxWidth && size > 52) {
     size -= 1;
     context.font = `600 ${size}px ${nameFont}`;
   }
   const lines = context.measureText(name).width > maxWidth
     ? wrapName(name, context, maxWidth)
     : [name];
-  const lineHeight = Math.max(size + 4, Math.min(size + 8, 220 / Math.max(1, lines.length - 1)));
+  const lineHeight = Math.max(size * 0.9, Math.min(size + 6, 160 / Math.max(1, lines.length - 1)));
   lines.forEach((line, index) => {
-    context.fillText(line, 256, 132 + (index - (lines.length - 1) / 2) * lineHeight);
+    context.fillText(line, middle, 126 + (index - (lines.length - 1) / 2) * lineHeight);
   });
-  if (role !== "center") {
-    context.font = "28px system-ui, sans-serif";
-    context.fillStyle = colors.getPropertyValue("--person-muted").trim();
-    context.fillText(role.replace("-", " "), 256, 270);
-  }
+  context.font = `500 44px ${colors.getPropertyValue("--ui-font").trim() || "system-ui, sans-serif"}`;
+  context.fillStyle = colors.getPropertyValue("--role-text").trim();
+  context.fillText(role === "center" ? "center person" : role.replace("-", " "), middle, 252);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   return texture;
 }
 
@@ -146,17 +181,19 @@ function addPerson(person, role, x, z, colors, center) {
   }
   peopleList.append(card);
 
-  const height = role === "center" ? 2.73 : 2.6;
-  const width = role === "center" ? 4.4 : 4.2;
-  const border = role === "center" ? 0.08 : 0.045;
-  const radius = 0.24;
+  const scale = cardScales[role] ?? 1;
+  const height = cardHeight * scale;
+  const width = cardWidth * scale;
+  const glow = colors.getPropertyValue(role === "center" ? "--center-glow" : "--card-glow").trim();
+  const border = (role === "center" ? 0.08 : 0.045) * (glow ? 1.6 : 1);
+  const radius = 0.24 * scale;
   const shape = roundedShape(width, height, radius);
+  const rimColor = glow || colors.getPropertyValue(role === "center" ? "--center-border" : "--border").trim();
   const backing = new THREE.Mesh(
-    new THREE.ExtrudeGeometry(shape, { depth: 0.09, bevelEnabled: false, curveSegments: 8 }),
-    new THREE.MeshStandardMaterial({
-      color: colors.getPropertyValue(role === "center" ? "--center-border" : "--border").trim(),
-      roughness: 1, metalness: 0
-    })
+    new THREE.ExtrudeGeometry(shape, { depth: cardDepth, bevelEnabled: false, curveSegments: 8 }),
+    glow
+      ? new THREE.MeshBasicMaterial({ color: rimColor })
+      : new THREE.MeshStandardMaterial({ color: rimColor, roughness: 1, metalness: 0 })
   );
   backing.position.set(x, height / 2, z);
   backing.renderOrder = 2;
@@ -174,13 +211,13 @@ function addPerson(person, role, x, z, colors, center) {
       map: tileTexture(displayName, role, colors, person)
     })
   );
-  tile.position.set(x, height / 2, z + 0.091);
+  tile.position.set(x, height / 2, z + cardDepth + 0.006);
   tile.renderOrder = 1;
   tile.userData.personId = person.id;
   members.add(tile);
   tiles.push(tile);
   const rear = new THREE.Mesh(geometry.clone(), tile.material.clone());
-  rear.position.set(x, height / 2, z - 0.001);
+  rear.position.set(x, height / 2, z - 0.006);
   rear.rotation.y = Math.PI;
   rear.renderOrder = 1;
   rear.userData.personId = person.id;
@@ -188,6 +225,7 @@ function addPerson(person, role, x, z, colors, center) {
   tiles.push(rear);
   for (const mesh of [backing, tile, rear]) mesh.userData.baseY = height / 2;
   personCards.set(person.id, [backing, tile, rear]);
+  if (glow) addCardGlow(x, height / 2, z + cardDepth / 2, width, height, radius, glow, role === "center" ? 1 : 0.7);
 
   const shadowCanvas = document.createElement("canvas");
   shadowCanvas.width = 256;
@@ -211,7 +249,76 @@ function addPerson(person, role, x, z, colors, center) {
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.set(x, 0.01, z);
   members.add(shadow);
-  return { x, z };
+  return { x, z, halfWidth: width / 2 };
+}
+
+function addPartnerToggle(x, z, visibleIndex, count, colors) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 160;
+  const context = canvas.getContext("2d");
+  context.fillStyle = colors.getPropertyValue("--card-bg").trim();
+  context.fillRect(0, 0, 512, 160);
+  context.fillStyle = colors.getPropertyValue("--text").trim();
+  context.font = `600 56px ${colors.getPropertyValue("--name-font").trim() || "system-ui, sans-serif"}`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(`Partners · ${count}`, 236, 82);
+  context.strokeStyle = colors.getPropertyValue("--text").trim();
+  context.lineWidth = 8;
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.beginPath();
+  context.moveTo(438, 58);
+  context.lineTo(462, 82);
+  context.lineTo(438, 106);
+  context.stroke();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const width = 2.8, height = 0.875, border = 0.045;
+  const glow = colors.getPropertyValue("--card-glow").trim();
+  const backing = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(roundedShape(width, height, height / 2), { depth: cardDepth, bevelEnabled: false, curveSegments: 12 }),
+    glow
+      ? new THREE.MeshBasicMaterial({ color: glow })
+      : new THREE.MeshStandardMaterial({ color: colors.getPropertyValue("--border").trim(), roughness: 1, metalness: 0 })
+  );
+  backing.position.set(x, height / 2, z);
+  members.add(backing);
+  const faceWidth = width - border * 2, faceHeight = height - border * 2;
+  const geometry = new THREE.ShapeGeometry(roundedShape(faceWidth, faceHeight, faceHeight / 2), 12);
+  const positions = geometry.getAttribute("position");
+  const uv = geometry.getAttribute("uv");
+  for (let i = 0; i < positions.count; i++) {
+    uv.setXY(i, positions.getX(i) / faceWidth + 0.5, positions.getY(i) / faceHeight + 0.5);
+  }
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+  for (const [offset, rotation] of [[cardDepth + 0.006, 0], [-0.006, Math.PI]]) {
+    const face = new THREE.Mesh(offset ? geometry : geometry.clone(), offset ? material : material.clone());
+    face.position.set(x, height / 2, z + offset);
+    face.rotation.y = rotation;
+    face.userData.action = "next-partner";
+    members.add(face);
+    tiles.push(face);
+  }
+
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "person partner-toggle";
+  toggle.setAttribute("aria-label", `Show next partner (${visibleIndex + 1} of ${count} shown)`);
+  const label = document.createElement("strong");
+  label.textContent = `Partners · ${count}`;
+  const hint = document.createElement("small");
+  hint.textContent = "show next partner";
+  toggle.append(label, hint);
+  peopleList.append(toggle);
+}
+
+function showNextPartner() {
+  if (!familyData) return;
+  partnerIndexes.set(centerPersonId, (partnerIndexes.get(centerPersonId) ?? 0) + 1);
+  renderFamily(familyData, centerPersonId);
 }
 
 function setHoveredPerson(personId) {
@@ -256,10 +363,24 @@ function setHoveredPerson(personId) {
   drawScene();
 }
 
-function addConnector(points, color) {
+function addConnector(points, color, dashed = false) {
   const path = points.map(({ x, z }) => new THREE.Vector3(x, 0.06, z))
     .filter((point, index, all) => !index || point.distanceTo(all[index - 1]) > 0.001);
   if (path.length < 2) return;
+  const material = new THREE.MeshBasicMaterial({ color });
+  if (dashed) {
+    const dash = 0.3, gap = 0.22;
+    for (let i = 1; i < path.length; i++) {
+      const start = path[i - 1], end = path[i];
+      const length = start.distanceTo(end);
+      for (let at = 0; at < length; at += dash + gap) {
+        const from = start.clone().lerp(end, at / length);
+        const to = start.clone().lerp(end, Math.min(length, at + dash) / length);
+        addTube(new THREE.LineCurve3(from, to), 1, material);
+      }
+    }
+    return;
+  }
   const curve = new THREE.CurvePath();
   let previous = path[0];
   for (let i = 1; i < path.length - 1; i++) {
@@ -277,79 +398,81 @@ function addConnector(points, color) {
     curve.add(new THREE.LineCurve3(previous, path.at(-1)));
   }
   if (!curve.curves.length) return;
+  addTube(curve, 24, material);
+}
+
+function addTube(curve, segments, material) {
+  members.add(new THREE.Mesh(new THREE.TubeGeometry(curve, segments, connectorRadius, 8, false), material));
+  if (!connectorGlow) return;
   members.add(new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 24, 0.035, 8, false),
-    new THREE.MeshBasicMaterial({ color })
+    new THREE.TubeGeometry(curve, segments, connectorRadius * 3.5, 8, false),
+    new THREE.MeshBasicMaterial({
+      color: connectorGlow, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending
+    })
   ));
 }
 
-function connectFamily(parents, children, colors, routes, busZs, familyIndex, lane) {
-  const familyColor = colors.getPropertyValue("--connector").trim();
-  const spouseColor = colors.getPropertyValue("--spouse-connector").trim();
-  const add = (points, color, bus = false) => routes.push({ points, color, bus, familyIndex });
-  const cardEdge = (point, toward) => {
-    const dx = toward.x - point.x, dz = toward.z - point.z;
-    if (Math.abs(dx) >= Math.abs(dz)) {
-      return { x: point.x + Math.sign(dx || 1) * 2.1, z: point.z };
-    }
-    return { x: point.x, z: point.z + Math.sign(dz || 1) * 0.12 };
-  };
-  let parentAnchor = parents[0];
+function addJunction({ x, z }, color) {
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(connectorRadius * 2.6, 16, 12), new THREE.MeshBasicMaterial({ color }));
+  dot.position.set(x, 0.06, z);
+  members.add(dot);
+}
 
-  if (parents.length === 2) {
-    const [first, second] = parents;
-    const vertical = Math.abs(first.x - second.x) < 0.01;
-    if (vertical) {
-      const railX = first.x - 2.8 + lane;
-      parentAnchor = { x: railX, z: (first.z + second.z) / 2 };
-      for (const offset of [-0.09, 0.09]) {
-        const x = railX + offset;
-        add([cardEdge(first, { x, z: first.z }), { x, z: first.z }, { x, z: second.z },
-          cardEdge(second, { x, z: second.z })], spouseColor);
-      }
-      if (children.length) add([
-        { x: railX - 0.09, z: parentAnchor.z }, { x: railX + 0.09, z: parentAnchor.z }
-      ], familyColor);
-    } else {
-      const railZ = (Math.abs(first.z - second.z) < 0.01
-        ? first.z - 1.4 : (first.z + second.z) / 2) + lane;
-      parentAnchor = { x: (first.x + second.x) / 2, z: railZ };
-      for (const offset of [-0.09, 0.09]) {
-        const z = railZ + offset;
-        add([cardEdge(first, second), { x: first.x, z }, { x: second.x, z }, cardEdge(second, first)], spouseColor);
-      }
-      if (children.length) add([
-        { x: parentAnchor.x, z: railZ - 0.09 }, { x: parentAnchor.x, z: railZ + 0.09 }
-      ], familyColor);
-    }
-  }
+function cardEdge(card, side) {
+  // Edges sit at floor level, halfway through the card slab.
+  if (side === "left") return { x: card.x - card.halfWidth, z: card.z + cardDepth / 2 };
+  if (side === "right") return { x: card.x + card.halfWidth, z: card.z + cardDepth / 2 };
+  if (side === "front") return { x: card.x, z: card.z + cardDepth + 0.04 };
+  return { x: card.x, z: card.z - 0.04 };
+}
 
-  if (!children.length || (!parentAnchor && children.length < 2)) return;
-  const childrenZ = children.reduce((sum, child) => sum + child.z, 0) / children.length;
-  let busZ = (parentAnchor && Math.abs(parentAnchor.z - childrenZ) > 0.01
-    ? (parentAnchor.z + childrenZ) / 2 : childrenZ - 0.8) + lane;
-  while (busZs.some((used) => Math.abs(used - busZ) < 0.3)) busZ += 0.3;
-  busZs.push(busZ);
-  const xs = children.map((child) => child.x);
-  if (parentAnchor) xs.push(parentAnchor.x);
-  const left = Math.min(...xs), right = Math.max(...xs);
-  add([{ x: left, z: busZ }, { x: right, z: busZ }], familyColor, true);
-  for (const child of children) {
-    const rail = { x: child.x, z: busZ };
-    add([cardEdge(child, rail), rail], familyColor);
+function connectAncestors(routes, child, parents, color, familyIndex) {
+  if (!parents.length) return;
+  const add = (points) => routes.push({ points, color, familyIndex });
+  const start = cardEdge(child, "back");
+  const sorted = [...parents].sort((a, b) => a.x - b.x);
+  if (sorted.length === 1) {
+    const end = cardEdge(sorted[0], "front");
+    const midZ = (start.z + end.z) / 2;
+    add(Math.abs(end.x - start.x) < 0.001
+      ? [start, end]
+      : [start, { x: start.x, z: midZ }, { x: end.x, z: midZ }, end]);
+    return;
   }
-  if (parentAnchor) {
-    const rail = { x: parentAnchor.x, z: busZ };
-    add([parents.length === 1 ? cardEdge(parentAnchor, rail) : parentAnchor, rail], familyColor);
-  } else {
-    const marker = new THREE.Mesh(
-      new THREE.RingGeometry(0.1, 0.17, 24),
-      new THREE.MeshBasicMaterial({ color: familyColor, side: THREE.DoubleSide })
-    );
-    marker.rotation.x = -Math.PI / 2;
-    marker.position.set((left + right) / 2, 0.065, busZ);
-    members.add(marker);
+  // Rise to the parents' midline, then branch into their inner sides.
+  const railStart = cardEdge(sorted[0], "right");
+  const railEnd = cardEdge(sorted.at(-1), "left");
+  add([railStart, railEnd]);
+  const stemX = Math.min(Math.max(start.x, railStart.x), railEnd.x);
+  routes.push({ points: [{ x: stemX, z: railStart.z }], color, familyIndex, junction: true });
+  const midZ = (start.z + railStart.z) / 2;
+  add(Math.abs(stemX - start.x) < 0.001
+    ? [start, { x: stemX, z: railStart.z }]
+    : [start, { x: start.x, z: midZ }, { x: stemX, z: midZ }, { x: stemX, z: railStart.z }]);
+}
+
+function connectDescendants(routes, anchor, targets, busZ, color, familyIndex) {
+  if (!targets.length) return;
+  const add = (points, dashed) => routes.push({ points, color, familyIndex, dashed });
+  if (targets.length === 1 && Math.abs(targets[0].point.x - anchor.x) < 0.001) {
+    add([anchor, targets[0].point], targets[0].dashed);
+    return;
   }
+  add([anchor, { x: anchor.x, z: busZ }], targets.every((target) => target.dashed));
+  routes.push({ points: [{ x: anchor.x, z: busZ }], color, familyIndex, junction: true });
+  for (const side of [-1, 1]) {
+    const sideTargets = targets
+      .filter((target) => Math.sign(Math.round((target.point.x - anchor.x) * 1000)) === side)
+      .sort((a, b) => Math.abs(a.point.x - anchor.x) - Math.abs(b.point.x - anchor.x));
+    let fromX = anchor.x;
+    sideTargets.forEach((target, index) => {
+      // A bus segment is dashed only when every branch beyond it is dashed.
+      add([{ x: fromX, z: busZ }, { x: target.point.x, z: busZ }],
+        sideTargets.slice(index).every((other) => other.dashed));
+      fromX = target.point.x;
+    });
+  }
+  for (const target of targets) add([{ x: target.point.x, z: busZ }, target.point], target.dashed);
 }
 
 function drawConnectors(routes) {
@@ -363,6 +486,10 @@ function drawConnectors(routes) {
     }
   }
   for (const route of routes) {
+    if (route.junction) {
+      addJunction(route.points[0], route.color);
+      continue;
+    }
     let part = [route.points[0]];
     for (let i = 1; i < route.points.length; i++) {
       const start = route.points[i - 1], end = route.points[i];
@@ -384,13 +511,13 @@ function drawConnectors(routes) {
         }
         for (const [before, after] of gaps) {
           part.push({ x: start.x, z: start.z + direction * before });
-          addConnector(part, route.color);
+          addConnector(part, route.color, route.dashed);
           part = [{ x: start.x, z: start.z + direction * after }];
         }
       }
       part.push(end);
     }
-    addConnector(part, route.color);
+    addConnector(part, route.color, route.dashed);
   }
 }
 
@@ -425,6 +552,15 @@ function addSpaceGrid(colors) {
   grid.rotation.x = -Math.PI / 2;
   grid.position.y = 0.01;
   members.add(grid);
+  const ringMaterial = new THREE.MeshBasicMaterial({
+    color: colors.getPropertyValue("--orbit-ring").trim(), side: THREE.DoubleSide, depthWrite: false
+  });
+  for (const radius of [7, 13, 19]) {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(radius - 0.03, radius + 0.03, 160), ringMaterial);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.02;
+    members.add(ring);
+  }
 }
 
 function renderFamily({ individuals, families }, centerId) {
@@ -449,28 +585,85 @@ function renderFamily({ individuals, families }, centerId) {
   const positions = new Map();
   const place = (person, role, x, z) => {
     if (!positions.has(person.id)) positions.set(person.id, addPerson(person, role, x, z, colors, center));
+    return positions.get(person.id);
   };
-  place(center, "center", 0, 0);
-  const row = (people, role, z) => people.forEach((person, index) =>
-    place(person, role, (index - (people.length - 1) / 2) * 5.2, z));
-  row(relatives.parents, "parent", -6);
-  row(relatives.grandparents, "grandparent", -12);
-  relatives.spouses.forEach((person, index) => place(person, "spouse", -5.2 - index * 5.2, 0));
-  relatives.siblings.forEach((person, index) => place(person, "sibling", 5.2 + index * 5.2, 0));
-  row(relatives.children, "child", 6);
-  row(relatives.grandchildren, "grandchild", 12);
-  const visibleFamilies = [];
-  for (const family of families.values()) {
-    const parents = [...new Set([family.husband, family.wife])].filter((id) => positions.has(id));
-    const children = [...new Set(family.children)].filter((id) => positions.has(id) && !parents.includes(id));
-    if (parents.length + children.length < 2) continue;
-    visibleFamilies.push({ parents, children });
+  connectorGlow = colors.getPropertyValue("--connector-glow").trim();
+  const gap = 1.4;
+  const spacing = cardWidth + gap;
+  const beside = (card, direction, role) =>
+    card.x + direction * (card.halfWidth + gap + cardWidth / 2 * (cardScales[role] ?? 1));
+  const row = (people, role, z, step = spacing, offset = 0) => people.map((person, index) =>
+    place(person, role, offset + (index - (people.length - 1) / 2) * step, z));
+  const centerCard = place(center, "center", 0, 0);
+
+  const grandparentIds = new Set(relatives.grandparents.map((person) => person.id));
+  // Leave room for each parent's own pair of grandparents, with a clear gap between pairs.
+  const grandparentStep = cardWidth * cardScales.grandparent + gap;
+  const parentCards = row(relatives.parents, "parent", -6,
+    grandparentIds.size ? Math.max(spacing, grandparentStep + cardWidth * cardScales.grandparent + gap * 3) : spacing);
+  const ancestorGroups = relatives.parents.map((parent, index) => {
+    const ids = new Set(parent.famc.flatMap((familyId) => {
+      const family = families.get(familyId);
+      return family ? [family.husband, family.wife] : [];
+    }).filter((id) => grandparentIds.has(id)));
+    const people = [...ids].map((id) => individuals.get(id));
+    return { child: parentCards[index], parents: row(people, "grandparent", -12, grandparentStep, parentCards[index].x) };
+  });
+
+  const partners = relatives.spouses;
+  const partnerIndex = partners.length ? (partnerIndexes.get(center.id) ?? 0) % partners.length : 0;
+  const partner = partners[partnerIndex];
+  const partnerCard = partner && place(partner, "spouse", beside(centerCard, -1, "spouse"), 0);
+  if (partners.length > 1) {
+    addPartnerToggle(partnerCard.x - partnerCard.halfWidth - gap - 1.4, 0, partnerIndex, partners.length, colors);
   }
-  const routes = [], busZs = [];
-  visibleFamilies.forEach(({ parents, children }, index) => connectFamily(
-    parents.map((id) => positions.get(id)), children.map((id) => positions.get(id)),
-    colors, routes, busZs, index, (index - (visibleFamilies.length - 1) / 2) * 0.4
-  ));
+
+  const siblingCards = [];
+  for (const sibling of relatives.siblings) {
+    const previous = siblingCards.at(-1) ?? centerCard;
+    siblingCards.push(place(sibling, "sibling", beside(previous, 1, "sibling"), 0));
+  }
+
+  // Children of a partner who is not shown get dashed branches and sit leftmost, near the partner toggle.
+  const otherParentHidden = (child) => {
+    const shared = center.fams.map((id) => families.get(id)).filter((family) => family?.children.includes(child.id));
+    return shared.length > 0 && shared.every((family) => {
+      const other = [family.husband, family.wife].find((id) => id && id !== center.id);
+      return other && other !== partner?.id;
+    });
+  };
+  const childEntries = relatives.children
+    .map((child) => ({ child, dashed: otherParentHidden(child) }))
+    .sort((a, b) => Number(b.dashed) - Number(a.dashed));
+  // With mixed branches, shift the row so dashed children sit left of the center stem instead of under it.
+  const dashedCount = childEntries.filter(({ dashed }) => dashed).length;
+  const childOffset = dashedCount && dashedCount < childEntries.length
+    ? -(dashedCount - childEntries.length / 2) * spacing
+    : 0;
+  const childCards = row(childEntries.map(({ child }) => child), "child", 6, spacing, childOffset);
+  const grandchildIds = new Set(relatives.grandchildren.map((person) => person.id));
+  row(relatives.grandchildren, "grandchild", 12);
+
+  const color = colors.getPropertyValue("--connector").trim();
+  const routes = [];
+  connectAncestors(routes, centerCard, parentCards, color, 1);
+  ancestorGroups.forEach(({ child, parents }, index) => connectAncestors(routes, child, parents, color, 2 + index));
+  if (partnerCard) {
+    routes.push({ points: [cardEdge(centerCard, "left"), cardEdge(partnerCard, "right")], color, familyIndex: 0 });
+  }
+  siblingCards.forEach((card, index) => routes.push({
+    points: [cardEdge(siblingCards[index - 1] ?? centerCard, "right"), cardEdge(card, "left")], color, familyIndex: 0
+  }));
+  connectDescendants(routes, cardEdge(centerCard, "front"), childCards.map((card, index) => ({
+    point: cardEdge(card, "back"), dashed: childEntries[index].dashed
+  })), 3, color, 100);
+  childEntries.forEach(({ child }, index) => {
+    const ids = new Set(child.fams.flatMap((familyId) => families.get(familyId)?.children ?? [])
+      .filter((id) => grandchildIds.has(id)));
+    connectDescendants(routes, cardEdge(childCards[index], "front"),
+      [...ids].map((id) => ({ point: cardEdge(positions.get(id), "back"), dashed: false })),
+      9 + (index - (childEntries.length - 1) / 2) * 0.4, color, 200 + index);
+  });
   connectorPoints = routes.flatMap((route) => route.points);
   drawConnectors(routes);
   const floor = new THREE.Mesh(

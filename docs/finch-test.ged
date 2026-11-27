@@ -1,0 +1,71 @@
+0 HEAD
+0 @SAM@ INDI
+1 NAME Sam /Finch/
+1 FAMC @FP@
+1 FAMS @FC@
+1 FAMS @FM@
+0 @DAN@ INDI
+1 NAME Daniel /Finch/
+1 FAMC @FDG@
+1 FAMS @FP@
+0 @HEL@ INDI
+1 NAME Helen /Finch/
+1 FAMC @FHG@
+1 FAMS @FP@
+0 @ROB@ INDI
+1 NAME Robert /Finch/
+1 FAMS @FDG@
+0 @ALI@ INDI
+1 NAME Alice /Finch/
+1 FAMS @FDG@
+0 @GEO@ INDI
+1 NAME George /Finch/
+1 FAMS @FHG@
+0 @NOR@ INDI
+1 NAME Nora /Finch/
+1 FAMS @FHG@
+0 @CAM@ INDI
+1 NAME Cameron /North/
+1 FAMS @FC@
+0 @MOR@ INDI
+1 NAME Morgan /Reed/
+1 FAMS @FM@
+0 @ROW@ INDI
+1 NAME Rowan /Finch/
+1 FAMC @FP@
+0 @AVE@ INDI
+1 NAME Avery /Finch/
+1 FAMC @FP@
+0 @RIL@ INDI
+1 NAME Riley /Finch/
+1 FAMC @FM@
+0 @JOR@ INDI
+1 NAME Jordan /Finch/
+1 FAMC @FC@
+0 @CAS@ INDI
+1 NAME Casey /Finch/
+1 FAMC @FC@
+0 @FP@ FAM
+1 HUSB @DAN@
+1 WIFE @HEL@
+1 CHIL @SAM@
+1 CHIL @ROW@
+1 CHIL @AVE@
+0 @FDG@ FAM
+1 HUSB @ROB@
+1 WIFE @ALI@
+1 CHIL @DAN@
+0 @FHG@ FAM
+1 HUSB @GEO@
+1 WIFE @NOR@
+1 CHIL @HEL@
+0 @FC@ FAM
+1 HUSB @SAM@
+1 WIFE @CAM@
+1 CHIL @JOR@
+1 CHIL @CAS@
+0 @FM@ FAM
+1 HUSB @SAM@
+1 WIFE @MOR@
+1 CHIL @RIL@
+0 TRLR
